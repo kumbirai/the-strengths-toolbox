@@ -1,0 +1,98 @@
+{
+  "note": "This file maps original image paths to new filenames and metadata. Update this after downloading images from source websites.",
+  "images": {
+    "tsa/about/eberhard-niklaus.jpg": {
+      "new_filename": "eberhard-niklaus.webp",
+      "alt_text": "Eberhard Niklaus, Founder of The Strengths Toolbox",
+      "page": "about-us",
+      "section": "our-story",
+      "description": "Professional photo of Eberhard Niklaus, founder and director"
+    },
+    "strengthstoolbox/about/eberhard-niklaus.jpg": {
+      "new_filename": "eberhard-niklaus.webp",
+      "alt_text": "Eberhard Niklaus, Founder of The Strengths Toolbox",
+      "page": "about-us",
+      "section": "our-story",
+      "description": "Professional photo of Eberhard Niklaus, founder and director"
+    },
+    "tsa/homepage/hero/hero-background.jpg": {
+      "new_filename": "homepage-hero-background.webp",
+      "alt_text": "Hero section background showing diverse team collaboration",
+      "page": "homepage",
+      "section": "hero"
+    },
+    "tsa/homepage/power-of-strengths.jpg": {
+      "new_filename": "homepage-power-of-strengths.webp",
+      "alt_text": "Illustration representing the power of strengths-based development",
+      "page": "homepage",
+      "section": "power-of-strengths"
+    },
+    "tsa/strengths-programme/programs-overview.jpg": {
+      "new_filename": "strengths-programme-overview.webp",
+      "alt_text": "Overview of the four strengths-based development programs",
+      "page": "strengths-programme",
+      "section": "programs"
+    },
+    "strengthstoolbox/blog/blog-how-your-natural-talents-are-the-key-to-unlocking-your-potential.jpg": {
+      "new_filename": "blog-natural-talents-unlock-potential.webp",
+      "alt_text": "Illustration showing natural talents unlocking potential",
+      "page": "blog",
+      "section": "featured",
+      "blog_post_slug": "how-your-natural-talents-are-the-key-to-unlocking-your-potential"
+    },
+    "strengthstoolbox/blog/blog-why-goals-are-essential-for-salespeople.jpg": {
+      "new_filename": "blog-goals-essential-salespeople.webp",
+      "alt_text": "Sales goals and performance illustration",
+      "page": "blog",
+      "section": "featured",
+      "blog_post_slug": "why-goals-are-essential-for-salespeople"
+    },
+    "strengthstoolbox/blog/blog-the-benefits-of-strengths-based-selling.jpg": {
+      "new_filename": "blog-strengths-based-selling.webp",
+      "alt_text": "Strengths-based selling approach illustration",
+      "page": "blog",
+      "section": "featured",
+      "blog_post_slug": "the-benefits-of-strengths-based-selling"
+    },
+    "strengthstoolbox/blog/blog-the-idea-that-anyone-can-sell-is-nonsense.jpg": {
+      "new_filename": "blog-anyone-can-sell-nonsense.webp",
+      "alt_text": "Sales talent and performance illustration",
+      "page": "blog",
+      "section": "featured",
+      "blog_post_slug": "the-idea-that-anyone-can-sell-is-nonsense"
+    },
+    "strengthstoolbox/blog/strengths-article.jpg": {
+      "new_filename": "blog-strengths-article.webp",
+      "alt_text": "Strengths-based development article featured image",
+      "page": "blog",
+      "section": "article"
+    },
+    "tsa/about/track-record-teamwork.jpg": {
+      "new_filename": "about-track-record-teamwork.webp",
+      "alt_text": "Team collaboration and success",
+      "page": "about-us",
+      "section": "track-record"
+    },
+    "strengthstoolbox/homepage/experience/manager-meeting.jpg": {
+      "new_filename": "homepage-experience.webp",
+      "alt_text": "Professional development and training experience",
+      "page": "homepage",
+      "section": "experience",
+      "description": "Image showing professional development and training"
+    },
+    "tsa/homepage/why-teams-fail/team-strategy.jpg": {
+      "new_filename": "homepage-why-teams-fail.webp",
+      "alt_text": "Team strategy and collaboration",
+      "page": "homepage",
+      "section": "why-teams-fail",
+      "description": "Image showing team planning and strategy"
+    },
+    "strengthstoolbox/books/free-ebook.jpg": {
+      "new_filename": "books-free-sales-ebook.webp",
+      "alt_text": "Free Sales Book eBook Cover - The Strengths Toolbox",
+      "page": "books",
+      "section": "ebook",
+      "description": "Free Sales Book eBook cover image"
+    }
+  }
+}

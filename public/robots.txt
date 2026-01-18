@@ -1,0 +1,8 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /api/
+Disallow: /search?
+Disallow: /blog/search?
+Disallow: /health
+
+Sitemap: https://www.thestrengthstoolbox.com/sitemap.xml
