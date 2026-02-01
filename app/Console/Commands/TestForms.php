@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Http;
  */
 class TestForms extends Command
 {
-    protected $signature = 'test:forms {--url=http://localhost:8000}';
+    protected $signature = 'test:forms {--url=https://localhost:8000}';
 
     protected $description = 'Test all forms for proper functionality';
 

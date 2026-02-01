@@ -15,11 +15,16 @@ class ForceHttps
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Only enforce HTTPS in production
-        if (app()->environment('production')) {
-            // Check if request is not secure (HTTP)
-            if (! $request->secure()) {
-                // Redirect to HTTPS version of the same URL
+        // Check if behind a proxy with HTTPS (like ngrok)
+        $isProxiedHttps = $request->header('X-Forwarded-Proto') === 'https' 
+                       || $request->header('X-Forwarded-Ssl') === 'on';
+
+        // Force HTTPS URLs when behind HTTPS proxy or in production
+        if ($isProxiedHttps || app()->environment('production')) {
+            \URL::forceScheme('https');
+            
+            // Only redirect in production if not already secure
+            if (app()->environment('production') && ! $request->secure() && ! $isProxiedHttps) {
                 return redirect()->secure($request->getRequestUri());
             }
         }

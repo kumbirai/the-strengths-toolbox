@@ -19,6 +19,9 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Trust all proxies for ngrok and other reverse proxies
+        $middleware->trustProxies(at: '*');
+
         // Add ForceHttps to web middleware group
         $middleware->web(append: [
             \App\Http\Middleware\ForceHttps::class,

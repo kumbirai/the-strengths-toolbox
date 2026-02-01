@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Http;
 class BenchmarkPerformance extends Command
 {
     protected $signature = 'benchmark:performance 
-                            {--url=http://localhost:8000 : Application URL}
+                            {--url=https://localhost:8000 : Application URL}
                             {--iterations=10 : Number of requests}';
 
     protected $description = 'Benchmark application performance metrics';

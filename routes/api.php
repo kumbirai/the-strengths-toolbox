@@ -8,6 +8,11 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
+// Suppress bot requests for non-existent analytics endpoints
+Route::get('/admin/analytics/dashboard', function () {
+    return response()->noContent();
+});
+
 // Chatbot API routes
 Route::prefix('chatbot')->name('api.chatbot.')->group(function () {
     // Send message endpoint

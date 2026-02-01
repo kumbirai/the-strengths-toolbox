@@ -30,9 +30,9 @@ class AppServiceProvider extends ServiceProvider
         // Enable query logging in development
         if (app()->environment('local')) {
             \DB::listen(function ($query) {
-                \Log::info($query->sql);
-                \Log::info($query->bindings);
-                \Log::info($query->time);
+                \Log::debug($query->sql);
+                \Log::debug($query->bindings);
+                \Log::debug($query->time);
             });
         }
     }

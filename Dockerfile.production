@@ -32,11 +32,20 @@ WORKDIR /var/www/html
 # Copy application files
 COPY . /var/www/html
 
-# Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+# Configure git to trust the directory (needed for composer)
+RUN git config --global --add safe.directory /var/www/html
 
-# Install Node dependencies and build assets
-RUN npm ci --production && npm run build
+# Install PHP dependencies (skip scripts to avoid build issues)
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+
+# Generate optimized autoload files
+RUN composer dump-autoload --optimize --no-dev --classmap-authoritative
+
+# Install Node dependencies (including dev deps needed for build)
+RUN npm ci && npm run build
+
+# Remove dev dependencies after build to reduce image size
+RUN npm prune --production
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html \

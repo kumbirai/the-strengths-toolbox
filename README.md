@@ -79,7 +79,7 @@ Start the development server:
 php artisan serve
 ```
 
-The application will be available at `http://localhost:8000`
+The application will be available at `https://localhost:8000`
 
 To make it accessible from other devices on your network:
 ```bash
@@ -130,7 +130,7 @@ pkill -f "php artisan serve"
 4. **Run tests**
    ```bash
    php artisan test
-   php artisan test:forms --url=http://localhost:8000
+   php artisan test:forms --url=https://localhost:8000
    php artisan test:routes
    php artisan security:audit
    php artisan benchmark:performance
@@ -206,7 +206,7 @@ Key environment variables for local development:
 APP_NAME="The Strengths Toolbox"
 APP_ENV=local
 APP_DEBUG=true
-APP_URL=http://localhost:8000
+APP_URL=https://localhost:8000
 
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1

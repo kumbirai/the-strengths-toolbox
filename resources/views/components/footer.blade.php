@@ -3,7 +3,13 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
             {{-- About --}}
             <div>
-                <h3 class="text-white font-display font-bold text-lg mb-4">About</h3>
+                <a href="{{ route('home') }}" class="inline-block mb-4">
+                    <img
+                        src="{{ asset('images/logo.png') }}"
+                        alt="{{ config('app.name') }}"
+                        class="h-12 w-auto brightness-0 invert"
+                    >
+                </a>
                 <p class="text-sm mb-4 leading-relaxed">
                     {{ config('app.name') }} helps organizations build strong teams and unlock strong profits through strengths-based development.
                 </p>
