@@ -73,7 +73,7 @@
                 </ul>
 
                 <div class="flex flex-col sm:flex-row gap-4">
-                    <a href="/sales-training" class="btn btn-primary text-lg">
+                    <a href="{{ route('pages.show', 'sales-courses') }}" class="btn btn-primary text-lg">
                         Explore Sales Courses
                     </a>
                     <a href="{{ route('contact') }}" class="btn btn-outline text-lg">

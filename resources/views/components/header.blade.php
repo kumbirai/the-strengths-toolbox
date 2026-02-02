@@ -27,6 +27,13 @@ use App\Helpers\NavigationHelper;
                    class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}">
                     Home
                 </a>
+
+                {{-- Sales Courses Dropdown --}}
+                <x-navigation-dropdown
+                    label="Sales Courses"
+                    :items="NavigationHelper::getSalesCoursesItems()"
+                />
+
                 <a href="{{ route('strengths-programme') }}"
                    class="nav-link {{ request()->routeIs('strengths-programme') ? 'active' : '' }}">
                     Strengths Programme
@@ -36,12 +43,6 @@ use App\Helpers\NavigationHelper;
                 <x-navigation-dropdown
                     label="Strengths-Based Development"
                     :items="NavigationHelper::getStrengthsBasedDevelopmentItems()"
-                />
-
-                {{-- Sales Training Dropdown --}}
-                <x-navigation-dropdown
-                    label="Sales Training"
-                    :items="NavigationHelper::getSalesTrainingItems()"
                 />
 
                 {{-- Facilitation Dropdown --}}
@@ -134,6 +135,34 @@ use App\Helpers\NavigationHelper;
                class="block px-4 py-3 rounded-lg text-neutral-700 hover:bg-primary-50 hover:text-primary-600 transition-colors">
                 Home
             </a>
+
+            {{-- Sales Courses (Mobile Dropdown) --}}
+            <div x-data="{ open: false }" class="space-y-1">
+                <button
+                    @click="open = !open"
+                    class="w-full flex items-center justify-between px-4 py-3 rounded-lg text-neutral-700 hover:bg-primary-50 hover:text-primary-600 transition-colors"
+                >
+                    <span>Sales Courses</span>
+                    <svg
+                        class="w-5 h-5 transition-transform"
+                        :class="open ? 'rotate-180' : ''"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+                <div x-show="open" x-collapse class="pl-4 space-y-1">
+                    @foreach(NavigationHelper::getSalesCoursesItems() as $item)
+                        <a href="{{ $item['url'] }}"
+                           class="block px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-primary-50 hover:text-primary-600">
+                            {{ $item['label'] }}
+                        </a>
+                    @endforeach
+                </div>
+            </div>
+
             <a href="{{ route('strengths-programme') }}"
                class="block px-4 py-3 rounded-lg text-neutral-700 hover:bg-primary-50 hover:text-primary-600 transition-colors">
                 Strengths Programme
@@ -158,33 +187,6 @@ use App\Helpers\NavigationHelper;
                 </button>
                 <div x-show="open" x-collapse class="pl-4 space-y-1">
                     @foreach(NavigationHelper::getStrengthsBasedDevelopmentItems() as $item)
-                        <a href="{{ $item['url'] }}"
-                           class="block px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-primary-50 hover:text-primary-600">
-                            {{ $item['label'] }}
-                        </a>
-                    @endforeach
-                </div>
-            </div>
-
-            {{-- Sales Training (Mobile Dropdown) --}}
-            <div x-data="{ open: false }" class="space-y-1">
-                <button
-                    @click="open = !open"
-                    class="w-full flex items-center justify-between px-4 py-3 rounded-lg text-neutral-700 hover:bg-primary-50 hover:text-primary-600 transition-colors"
-                >
-                    <span>Sales Training</span>
-                    <svg
-                        class="w-5 h-5 transition-transform"
-                        :class="open ? 'rotate-180' : ''"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                    </svg>
-                </button>
-                <div x-show="open" x-collapse class="pl-4 space-y-1">
-                    @foreach(NavigationHelper::getSalesTrainingItems() as $item)
                         <a href="{{ $item['url'] }}"
                            class="block px-3 py-2 rounded-md text-sm text-gray-600 hover:bg-primary-50 hover:text-primary-600">
                             {{ $item['label'] }}

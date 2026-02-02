@@ -13,10 +13,10 @@ use Illuminate\Support\Str;
 /**
  * Migrate blog posts from existing website
  *
- * Current Status: 33 blog posts (complete set from https://www.thestrengthstoolbox.com/blog/)
- *
- * Note: Featured images should be downloaded and assigned separately using:
- * php artisan blog:assign-featured-images
+ * Uses content-migration/tsa-blog-inventory.json when present for TSA full content and metadata.
+ * To refresh inventory: php artisan blog:inventory-tsa --fetch-content
+ * To download and assign TSA featured images: php artisan blog:inventory-tsa --download-images
+ * (Or use image-mapping.json: php artisan blog:download-tsa-images)
  */
 class BlogPostMigrationSeeder extends Seeder
 {
@@ -61,6 +61,8 @@ class BlogPostMigrationSeeder extends Seeder
      */
     protected function seedBlogPosts(User $author): void
     {
+        $tsaInventory = $this->loadTsaInventory();
+
         $posts = [
             [
                 'title' => 'How Your Natural Talents Are the Key to Unlocking Your Potential',
@@ -88,7 +90,7 @@ class BlogPostMigrationSeeder extends Seeder
                 'meta_description' => 'Learn why setting and achieving goals is crucial for sales performance and how it inspires salespeople to excel.',
                 'meta_keywords' => 'sales goals, sales performance, goal setting, salespeople, sales training',
                 'category_slugs' => ['business-coaching', 'strengths-based-coaching'],
-                'tag_slugs' => ['sales goals', 'sales performance', 'goal setting', 'sales training'],
+                'tag_slugs' => ['sales goals', 'sales performance', 'goal setting', 'sales courses'],
             ],
             [
                 'title' => 'The Benefits of Strengths-Based Selling',
@@ -550,7 +552,7 @@ class BlogPostMigrationSeeder extends Seeder
                 'meta_description' => 'Discover how relationship marketing can unlock your selling success.',
                 'meta_keywords' => 'relationship marketing, sales, selling, customer relationships, sales training',
                 'category_slugs' => ['business-coaching', 'coaching', 'strengths-based-coaching'],
-                'tag_slugs' => ['relationship marketing', 'sales', 'selling', 'customer relationships', 'sales training'],
+                'tag_slugs' => ['relationship marketing', 'sales', 'selling', 'customer relationships', 'sales courses'],
             ],
             [
                 'title' => 'THE BEST INVESTMENT ANYONE CAN MAKE – YOURSELF!',
@@ -566,9 +568,516 @@ class BlogPostMigrationSeeder extends Seeder
                 'category_slugs' => ['business-coaching', 'coaching', 'personal-coaching', 'strengths-based-coaching'],
                 'tag_slugs' => ['self-investment', 'personal development', 'growth', 'potential', 'strengths'],
             ],
+            // TSA-only articles (brand: The Strengths Toolbox)
+            [
+                'title' => 'Aligning Tasks to Talent Using a Strengths-Based Approach',
+                'slug' => 'aligning-tasks-to-talent-using-a-strengths-based-approach',
+                'excerpt' => 'Unlocking potential through strengths alignment. In today\'s fast-paced workplace, leveraging employee strengths is a game changer for boosting productivity, engagement, and job satisfaction.',
+                'content' => $this->getBlogPostContent('aligning-tasks-to-talent'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2024-06-01'),
+                'meta_title' => 'Aligning Tasks to Talent Using a Strengths-Based Approach - The Strengths Toolbox',
+                'meta_description' => 'Learn how a strengths-based approach helps align tasks to talent for greater productivity and engagement.',
+                'meta_keywords' => 'strengths-based approach, talent alignment, productivity, engagement, workplace',
+                'category_slugs' => ['business-coaching', 'strengths-based-coaching', 'leadership'],
+                'tag_slugs' => ['strengths', 'team performance', 'engagement', 'Strengths-Based Development'],
+            ],
+            [
+                'title' => 'The Art of Conflict Resolution: Building Stronger Teams Together',
+                'slug' => 'the-art-of-conflict-resolution-building-stronger-teams-together',
+                'excerpt' => 'Discover practical strategies for workplace conflict resolution that build stronger teams, promote collaboration, and enhance leadership effectiveness across organizations.',
+                'content' => $this->getBlogPostContent('art-of-conflict-resolution'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2024-06-15'),
+                'meta_title' => 'The Art of Conflict Resolution: Building Stronger Teams - The Strengths Toolbox',
+                'meta_description' => 'Practical strategies for workplace conflict resolution that build stronger teams and enhance leadership.',
+                'meta_keywords' => 'conflict resolution, team building, leadership, collaboration',
+                'category_slugs' => ['business-coaching', 'leadership', 'team-development'],
+                'tag_slugs' => ['team building', 'leadership', 'engagement', 'relationships'],
+            ],
+            [
+                'title' => 'Difficult Conversations & Feedback: How to Handle Tough Talks and Deliver Constructive Criticism',
+                'slug' => 'difficult-conversations-and-feedback-how-to-handle-tough-talks',
+                'excerpt' => 'Difficult conversations are key to effective leadership. This guide shares principles, the SBI model, and strategies to deliver constructive feedback, manage emotions, and turn tough talks into growth opportunities.',
+                'content' => $this->getBlogPostContent('difficult-conversations-feedback'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2024-07-01'),
+                'meta_title' => 'Difficult Conversations & Feedback - The Strengths Toolbox',
+                'meta_description' => 'Learn how to handle tough talks and deliver constructive feedback for individual and team growth.',
+                'meta_keywords' => 'difficult conversations, feedback, leadership, constructive criticism',
+                'category_slugs' => ['business-coaching', 'leadership', 'coaching'],
+                'tag_slugs' => ['leadership', 'management', 'engagement', 'confidence'],
+            ],
+            [
+                'title' => 'From Weakness Fixing to Strengths Building: The Manager\'s Guide to Team Performance',
+                'slug' => 'from-weakness-fixing-to-strengths-building-the-managers-guide',
+                'excerpt' => 'Move from weakness-fixing to strengths-building leadership. Discover practical strategies for managers to identify, develop, and leverage team members\' strengths, creating motivated, high-performing teams.',
+                'content' => $this->getBlogPostContent('weakness-fixing-to-strengths-building'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2024-07-15'),
+                'meta_title' => 'From Weakness Fixing to Strengths Building - The Strengths Toolbox',
+                'meta_description' => 'A manager\'s guide to strengths-building for high-performing teams.',
+                'meta_keywords' => 'strengths-based development, management, team performance, leadership',
+                'category_slugs' => ['business-coaching', 'strengths-based-coaching', 'leadership'],
+                'tag_slugs' => ['Strengths-Based Development', 'leadership', 'team performance', 'management'],
+            ],
+            [
+                'title' => 'Strengths-Based Leadership: Leveraging Individual Strengths to Create Dynamic Teams',
+                'slug' => 'strengths-based-leadership-leveraging-individual-strengths',
+                'excerpt' => 'Strengths-based leadership empowers teams by focusing on individual talents. Discover practical steps to identify, align, and develop strengths, fostering collaboration, motivation, and high performance.',
+                'content' => $this->getBlogPostContent('strengths-based-leadership'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2024-08-01'),
+                'meta_title' => 'Strengths-Based Leadership - The Strengths Toolbox',
+                'meta_description' => 'Leverage individual strengths to create dynamic, high-performing teams.',
+                'meta_keywords' => 'strengths-based leadership, team building, leadership development',
+                'category_slugs' => ['business-coaching', 'strengths-based-coaching', 'leadership'],
+                'tag_slugs' => ['Strengths-Based Development', 'leadership', 'team performance'],
+            ],
+            [
+                'title' => 'The Importance of Mentorship: Stories and Tips on Finding and Being a Mentor as a Leader',
+                'slug' => 'the-importance-of-mentorship-stories-and-tips-for-leaders',
+                'excerpt' => 'Mentorship accelerates leadership growth by connecting experience with potential. Learn why it matters, how to find the right mentor, and practical tips for becoming an effective mentor yourself.',
+                'content' => $this->getBlogPostContent('importance-of-mentorship'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2024-08-15'),
+                'meta_title' => 'The Importance of Mentorship for Leaders - The Strengths Toolbox',
+                'meta_description' => 'Why mentorship matters and how to find or become an effective mentor.',
+                'meta_keywords' => 'mentorship, leadership, development, coaching',
+                'category_slugs' => ['business-coaching', 'leadership', 'coaching'],
+                'tag_slugs' => ['leadership', 'coaching', 'engagement', 'growth'],
+            ],
+            [
+                'title' => 'Psychological Safety at Work',
+                'slug' => 'psychological-safety-at-work',
+                'excerpt' => 'Psychological safety empowers teams to innovate, collaborate, and thrive. This article explores why it matters, the risks of lacking it, and practical strategies leaders can use to build safe, resilient workplaces.',
+                'content' => $this->getBlogPostContent('psychological-safety-at-work'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2024-09-01'),
+                'meta_title' => 'Psychological Safety at Work - The Strengths Toolbox',
+                'meta_description' => 'Build psychological safety so teams can innovate, collaborate, and thrive.',
+                'meta_keywords' => 'psychological safety, leadership, team performance, workplace culture',
+                'category_slugs' => ['business-coaching', 'leadership', 'team-development'],
+                'tag_slugs' => ['leadership', 'team performance', 'engagement', 'confidence'],
+            ],
+            [
+                'title' => 'Overcoming Imposter Syndrome: Essential Advice for New and Seasoned Managers',
+                'slug' => 'overcoming-imposter-syndrome-advice-for-managers',
+                'excerpt' => 'Imposter syndrome affects new and seasoned managers alike. This guide shares nine proven strategies to overcome self-doubt, embrace confidence, and lead authentically while fostering a supportive, growth-driven workplace culture.',
+                'content' => $this->getBlogPostContent('overcoming-imposter-syndrome'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2024-09-15'),
+                'meta_title' => 'Overcoming Imposter Syndrome for Managers - The Strengths Toolbox',
+                'meta_description' => 'Nine strategies to overcome imposter syndrome and lead with confidence.',
+                'meta_keywords' => 'imposter syndrome, leadership, confidence, management',
+                'category_slugs' => ['business-coaching', 'leadership', 'personal-coaching'],
+                'tag_slugs' => ['leadership', 'confidence', 'management', 'engagement'],
+            ],
+            [
+                'title' => 'Navigating Different Management Styles: Comparing Authoritarian, Democratic, and Coaching Styles',
+                'slug' => 'navigating-different-management-styles-comparing-authoritarian-democratic-coaching',
+                'excerpt' => 'Unlock the secrets to effective management by exploring the strengths, drawbacks, and best-use cases for Authoritarian, Democratic, and Coaching leadership styles.',
+                'content' => $this->getBlogPostContent('navigating-management-styles'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2024-10-01'),
+                'meta_title' => 'Navigating Different Management Styles - The Strengths Toolbox',
+                'meta_description' => 'Compare authoritarian, democratic, and coaching management styles and when to use each.',
+                'meta_keywords' => 'management styles, leadership, coaching, organizational development',
+                'category_slugs' => ['business-coaching', 'leadership', 'coaching'],
+                'tag_slugs' => ['leadership', 'management', 'coaching', 'engagement'],
+            ],
+            // TSA blog pages 2–4 (full paginated inventory from https://www.tsabusinessschool.co.za/blog/)
+            [
+                'title' => 'How to Close a Challenging Sale: Proven Strategies for Re-Engaging Silent Prospects',
+                'slug' => 'how-to-close-a-challenging-sale-re-engaging-silent-prospects',
+                'excerpt' => 'Closing a sale is never easy, but closing a challenging sale—where a once-promising prospect suddenly goes silent—can feel especially daunting. Learn proven strategies to re-engage silent prospects and seal deals.',
+                'content' => $this->getBlogPostContent('close-challenging-sale'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2025-10-20'),
+                'meta_title' => 'How to Close a Challenging Sale - The Strengths Toolbox',
+                'meta_description' => 'Proven strategies to re-engage silent prospects and close challenging sales.',
+                'meta_keywords' => 'sales closing, re-engage prospects, sales strategies',
+                'category_slugs' => ['business-coaching', 'sales-courses'],
+                'tag_slugs' => ['sales', 'closing', 'prospects'],
+            ],
+            [
+                'title' => 'The Power of Strengths in Teamwork',
+                'slug' => 'the-power-of-strengths-in-teamwork',
+                'excerpt' => 'Discover how focusing on strengths boosts teamwork and results. Key lessons for managers to unlock talents, align roles, and build a culture of growth.',
+                'content' => $this->getBlogPostContent('power-of-strengths-teamwork'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2025-10-15'),
+                'meta_title' => 'The Power of Strengths in Teamwork - The Strengths Toolbox',
+                'meta_description' => 'How focusing on strengths boosts teamwork and results.',
+                'meta_keywords' => 'strengths, teamwork, team performance',
+                'category_slugs' => ['business-coaching', 'strengths-based-coaching', 'leadership'],
+                'tag_slugs' => ['strengths', 'teamwork', 'engagement'],
+            ],
+            [
+                'title' => 'Daily Habits of Successful Salespeople: How to Boost Your Sales Performance Every Day',
+                'slug' => 'daily-habits-of-successful-salespeople',
+                'excerpt' => 'Success in sales isn\'t accidental—it\'s built on consistent daily habits. From powerful morning routines to relentless prospecting and reflection, we break down the proven habits of top sales performers.',
+                'content' => $this->getBlogPostContent('daily-habits-salespeople'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2025-10-10'),
+                'meta_title' => 'Daily Habits of Successful Salespeople - The Strengths Toolbox',
+                'meta_description' => 'Proven daily habits of top sales performers to boost your sales.',
+                'meta_keywords' => 'sales habits, sales performance, daily routines',
+                'category_slugs' => ['business-coaching', 'sales-courses'],
+                'tag_slugs' => ['sales', 'habits', 'performance'],
+            ],
+            [
+                'title' => 'Building Trust and Credibility: The Fundamentals of Trust-Building and Authentic Leadership',
+                'slug' => 'building-trust-and-credibility-authentic-leadership',
+                'excerpt' => 'Trust and credibility are the foundation of impactful leadership. Learn practical strategies to lead with authenticity, accountability, and lasting influence.',
+                'content' => $this->getBlogPostContent('building-trust-credibility'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2025-10-05'),
+                'meta_title' => 'Building Trust and Credibility - The Strengths Toolbox',
+                'meta_description' => 'Practical strategies to lead with authenticity and build lasting trust.',
+                'meta_keywords' => 'trust, credibility, leadership, authenticity',
+                'category_slugs' => ['business-coaching', 'leadership'],
+                'tag_slugs' => ['trust', 'leadership', 'credibility'],
+            ],
+            [
+                'title' => 'Five Qualities to Elevate Your Emotional Intelligence',
+                'slug' => 'five-qualities-to-elevate-your-emotional-intelligence',
+                'excerpt' => 'Emotional intelligence (EI) is crucial for success in the workplace. It extends beyond intellectual capability, enabling individuals to navigate interpersonal relationships effectively.',
+                'content' => $this->getBlogPostContent('five-qualities-emotional-intelligence'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2025-09-28'),
+                'meta_title' => 'Five Qualities to Elevate Your Emotional Intelligence - The Strengths Toolbox',
+                'meta_description' => 'Key qualities that elevate emotional intelligence in the workplace.',
+                'meta_keywords' => 'emotional intelligence, EI, workplace, leadership',
+                'category_slugs' => ['business-coaching', 'leadership', 'coaching'],
+                'tag_slugs' => ['emotional intelligence', 'leadership', 'development'],
+            ],
+            [
+                'title' => 'The Roles of "Emotions" and "Communication" in Elevating Emotional Intelligence',
+                'slug' => 'the-roles-of-emotions-and-communication-in-emotional-intelligence',
+                'excerpt' => 'Emotional intelligence (EI) is essential for personal and professional growth. It involves recognizing and managing your emotions while effectively understanding the emotions of others.',
+                'content' => $this->getBlogPostContent('emotions-communication-ei'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2025-09-25'),
+                'meta_title' => 'Emotions and Communication in Emotional Intelligence - The Strengths Toolbox',
+                'meta_description' => 'How emotions and communication elevate emotional intelligence.',
+                'meta_keywords' => 'emotional intelligence, communication, emotions',
+                'category_slugs' => ['business-coaching', 'coaching'],
+                'tag_slugs' => ['emotional intelligence', 'communication'],
+            ],
+            [
+                'title' => 'Tools to Regulate Your Emotions',
+                'slug' => 'tools-to-regulate-your-emotions',
+                'excerpt' => 'Emotional regulation is a crucial skill for personal and professional success. It\'s not just about having the desire to change but also about understanding situations from different perspectives.',
+                'content' => $this->getBlogPostContent('tools-regulate-emotions'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2025-09-22'),
+                'meta_title' => 'Tools to Regulate Your Emotions - The Strengths Toolbox',
+                'meta_description' => 'Effective strategies for emotional regulation at work and in life.',
+                'meta_keywords' => 'emotional regulation, self-management, workplace',
+                'category_slugs' => ['business-coaching', 'personal-coaching'],
+                'tag_slugs' => ['emotional regulation', 'self-management'],
+            ],
+            [
+                'title' => 'The Role of Emotional Intelligence at Work',
+                'slug' => 'the-role-of-emotional-intelligence-at-work',
+                'excerpt' => 'Emotional intelligence influences how we lead, communicate, and collaborate. Learn how self-awareness, empathy, and constructive dialogue shape a productive workplace.',
+                'content' => $this->getBlogPostContent('role-ei-at-work'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2025-09-18'),
+                'meta_title' => 'The Role of Emotional Intelligence at Work - The Strengths Toolbox',
+                'meta_description' => 'How emotional intelligence shapes leadership and collaboration at work.',
+                'meta_keywords' => 'emotional intelligence, workplace, leadership, collaboration',
+                'category_slugs' => ['business-coaching', 'leadership'],
+                'tag_slugs' => ['emotional intelligence', 'workplace', 'leadership'],
+            ],
+            [
+                'title' => 'How to Deliver a "Gold Standard" Service – Part 2: Identifying and Addressing Customer Needs',
+                'slug' => 'gold-standard-service-part-2-customer-needs',
+                'excerpt' => 'Exceptional service starts with truly understanding your customers. Learn how to meet needs, foster loyalty, and go beyond expectations by mastering the fundamentals of gold standard customer care.',
+                'content' => $this->getBlogPostContent('gold-standard-service-part-2'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2025-09-12'),
+                'meta_title' => 'Gold Standard Service Part 2: Customer Needs - The Strengths Toolbox',
+                'meta_description' => 'How to identify and address customer needs for exceptional service.',
+                'meta_keywords' => 'customer service, gold standard, customer needs',
+                'category_slugs' => ['business-coaching'],
+                'tag_slugs' => ['customer service', 'customer needs'],
+            ],
+            [
+                'title' => 'Unlocking Your Potential: How Your Thoughts Create Your Reality',
+                'slug' => 'unlocking-your-potential-how-your-thoughts-create-your-reality',
+                'excerpt' => 'Your thoughts shape your world. Learn how to overcome limiting beliefs, shift your mindset, and create the reality you desire through practical insights and empowering strategies backed by psychology.',
+                'content' => $this->getBlogPostContent('unlocking-potential-thoughts-reality'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2025-09-08'),
+                'meta_title' => 'Unlocking Your Potential - The Strengths Toolbox',
+                'meta_description' => 'How your thoughts create your reality and how to shift your mindset.',
+                'meta_keywords' => 'potential, mindset, personal development',
+                'category_slugs' => ['personal-coaching', 'strengths-based-coaching'],
+                'tag_slugs' => ['potential', 'mindset', 'development'],
+            ],
+            [
+                'title' => 'The Spark Within: Finding Inspiration in Everyday Life',
+                'slug' => 'the-spark-within-finding-inspiration-in-everyday-life',
+                'excerpt' => 'Inspiration isn\'t a random moment—it\'s a mindset you can cultivate. Discover how to spark creativity, gain motivation, and embrace the extraordinary in everyday life through nature, mindfulness, and goal setting.',
+                'content' => $this->getBlogPostContent('spark-within-inspiration'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2025-09-05'),
+                'meta_title' => 'The Spark Within: Finding Inspiration - The Strengths Toolbox',
+                'meta_description' => 'How to cultivate inspiration and creativity in everyday life.',
+                'meta_keywords' => 'inspiration, creativity, mindfulness',
+                'category_slugs' => ['personal-coaching'],
+                'tag_slugs' => ['inspiration', 'creativity', 'mindfulness'],
+            ],
+            [
+                'title' => 'Invest in Your Potential: A Guide to Self-Improvement',
+                'slug' => 'invest-in-your-potential-a-guide-to-self-improvement',
+                'excerpt' => 'Investing in your potential is the smartest decision you\'ll ever make. Learn how to unlock your personal growth, overcome obstacles, and embrace practical steps that lead to a more confident, fulfilled, and successful you.',
+                'content' => $this->getBlogPostContent('invest-potential-self-improvement'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2025-09-01'),
+                'meta_title' => 'Invest in Your Potential - The Strengths Toolbox',
+                'meta_description' => 'A practical guide to self-improvement and unlocking your potential.',
+                'meta_keywords' => 'self-improvement, potential, personal growth',
+                'category_slugs' => ['personal-coaching', 'strengths-based-coaching'],
+                'tag_slugs' => ['self-improvement', 'potential', 'growth'],
+            ],
+            [
+                'title' => 'How to Effectively Close Sales: Mastering the Art of the Sale',
+                'slug' => 'how-to-effectively-close-sales-mastering-the-art-of-the-sale',
+                'excerpt' => 'Master the art of closing with proven sales strategies that build trust, handle objections, and guide your prospects to a confident "yes."',
+                'content' => $this->getBlogPostContent('effectively-close-sales'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2025-08-28'),
+                'meta_title' => 'How to Effectively Close Sales - The Strengths Toolbox',
+                'meta_description' => 'Proven strategies to master the art of closing sales.',
+                'meta_keywords' => 'sales closing, sales strategies, closing techniques',
+                'category_slugs' => ['business-coaching', 'sales-courses'],
+                'tag_slugs' => ['sales', 'closing', 'strategies'],
+            ],
+            [
+                'title' => 'Personalization at Scale in Outreach: How to Connect Authentically with Large Audiences',
+                'slug' => 'personalization-at-scale-in-outreach',
+                'excerpt' => 'In today\'s competitive market, generic outreach no longer works. Learn how to use personalization at scale to create relevant, authentic connections that drive real results.',
+                'content' => $this->getBlogPostContent('personalization-at-scale-outreach'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2025-08-25'),
+                'meta_title' => 'Personalization at Scale in Outreach - The Strengths Toolbox',
+                'meta_description' => 'How to connect authentically with large audiences through personalization.',
+                'meta_keywords' => 'personalization, outreach, sales, marketing',
+                'category_slugs' => ['business-coaching', 'sales-courses'],
+                'tag_slugs' => ['personalization', 'outreach', 'sales'],
+            ],
+            [
+                'title' => 'Mastering Cold Calling: Techniques and How to Overcome Call Reluctance',
+                'slug' => 'mastering-cold-calling-techniques-and-overcome-call-reluctance',
+                'excerpt' => 'Cold calling remains one of the most effective sales strategies, yet many salespeople struggle with it due to call reluctance. This guide explores why cold calling still matters and shares proven techniques.',
+                'content' => $this->getBlogPostContent('mastering-cold-calling'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2025-08-22'),
+                'meta_title' => 'Mastering Cold Calling - The Strengths Toolbox',
+                'meta_description' => 'Techniques to master cold calling and overcome call reluctance.',
+                'meta_keywords' => 'cold calling, sales, call reluctance',
+                'category_slugs' => ['business-coaching', 'sales-courses'],
+                'tag_slugs' => ['cold calling', 'sales', 'prospecting'],
+            ],
+            [
+                'title' => 'Unlocking Sales Success: Motivation and Mindset Mastery',
+                'slug' => 'unlocking-sales-success-motivation-and-mindset-mastery',
+                'excerpt' => 'A practical guide for sales professionals looking to reignite their drive and build a growth-oriented mindset. Actionable strategies to manage daily motivation, develop a purpose-driven sales approach, overcome burnout, and create deeper client connections.',
+                'content' => $this->getBlogPostContent('unlocking-sales-success-motivation-mindset'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2025-08-18'),
+                'meta_title' => 'Unlocking Sales Success: Motivation and Mindset - The Strengths Toolbox',
+                'meta_description' => 'Build motivation and mindset for sustained sales success.',
+                'meta_keywords' => 'sales success, motivation, mindset, sales performance',
+                'category_slugs' => ['business-coaching', 'sales-courses'],
+                'tag_slugs' => ['sales', 'motivation', 'mindset'],
+            ],
+            [
+                'title' => 'How Teams Can Sustain a Strengths-Based Approach: A Comprehensive Guide',
+                'slug' => 'how-teams-can-sustain-a-strengths-based-approach',
+                'excerpt' => 'Unlock higher performance and engagement with a strengths-based approach. Learn how winning teams leverage individual talents to build a thriving, resilient culture. Practical steps for embedding strengths into leadership, feedback, and daily collaboration.',
+                'content' => $this->getBlogPostContent('teams-sustain-strengths-approach'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2025-08-15'),
+                'meta_title' => 'How Teams Sustain a Strengths-Based Approach - The Strengths Toolbox',
+                'meta_description' => 'A comprehensive guide to sustaining strengths-based teams.',
+                'meta_keywords' => 'strengths-based, teams, culture, leadership',
+                'category_slugs' => ['business-coaching', 'strengths-based-coaching', 'leadership'],
+                'tag_slugs' => ['strengths', 'teams', 'culture'],
+            ],
+            [
+                'title' => 'How Managers and Teams Benefit by Focusing on Strengths',
+                'slug' => 'how-managers-and-teams-benefit-by-focusing-on-strengths',
+                'excerpt' => 'When managers and teams focus on strengths, engagement and results improve. Learn mindset shifts, practice techniques, and structured routines that help organizations thrive.',
+                'content' => $this->getBlogPostContent('managers-teams-benefit-strengths'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2025-08-12'),
+                'meta_title' => 'How Managers and Teams Benefit from Strengths - The Strengths Toolbox',
+                'meta_description' => 'Benefits of focusing on strengths for managers and teams.',
+                'meta_keywords' => 'strengths, managers, teams, engagement',
+                'category_slugs' => ['business-coaching', 'strengths-based-coaching', 'leadership'],
+                'tag_slugs' => ['strengths', 'managers', 'teams'],
+            ],
+            [
+                'title' => 'Overcoming Call Reluctance in Sales: Strategies for Success',
+                'slug' => 'overcoming-call-reluctance-in-sales-strategies-for-success',
+                'excerpt' => 'Overcome call reluctance with proven strategies to boost confidence, improve sales performance, and achieve success. Learn mindset shifts, practice techniques, and structured routines.',
+                'content' => $this->getBlogPostContent('overcoming-call-reluctance-sales'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2025-08-08'),
+                'meta_title' => 'Overcoming Call Reluctance in Sales - The Strengths Toolbox',
+                'meta_description' => 'Strategies to overcome call reluctance and boost sales performance.',
+                'meta_keywords' => 'call reluctance, sales, confidence',
+                'category_slugs' => ['business-coaching', 'sales-courses'],
+                'tag_slugs' => ['call reluctance', 'sales', 'confidence'],
+            ],
+            [
+                'title' => 'Effective Prospecting in Sales: Strategies for Success',
+                'slug' => 'effective-prospecting-in-sales-strategies-for-success',
+                'excerpt' => 'Master sales prospecting with proven strategies to identify and convert high-quality leads. Learn how to personalize outreach, use multiple channels, and nurture lasting relationships.',
+                'content' => $this->getBlogPostContent('effective-prospecting-sales'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2025-08-05'),
+                'meta_title' => 'Effective Prospecting in Sales - The Strengths Toolbox',
+                'meta_description' => 'Proven strategies for effective sales prospecting.',
+                'meta_keywords' => 'prospecting, sales, leads',
+                'category_slugs' => ['business-coaching', 'sales-courses'],
+                'tag_slugs' => ['prospecting', 'sales', 'leads'],
+            ],
+            [
+                'title' => 'Getting Past the Gatekeeper: Strategies for Sales Success',
+                'slug' => 'getting-past-the-gatekeeper-strategies-for-sales-success',
+                'excerpt' => 'Discover effective strategies to get past gatekeepers and reach decision-makers. Leverage referrals, build rapport, and use strategic timing to boost your sales success.',
+                'content' => $this->getBlogPostContent('getting-past-gatekeeper'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2025-08-01'),
+                'meta_title' => 'Getting Past the Gatekeeper - The Strengths Toolbox',
+                'meta_description' => 'Strategies to get past gatekeepers and reach decision-makers.',
+                'meta_keywords' => 'gatekeeper, sales, prospecting',
+                'category_slugs' => ['business-coaching', 'sales-courses'],
+                'tag_slugs' => ['gatekeeper', 'sales', 'prospecting'],
+            ],
+            [
+                'title' => 'Unlocking Your Inner Greatness: The Power of Personal Growth',
+                'slug' => 'unlocking-your-inner-greatness-the-power-of-personal-growth',
+                'excerpt' => 'Investing in yourself is the key to unlocking your full potential. By focusing on personal growth, skill development, and self-care, you can transform your life, open doors to new opportunities, and achieve lasting success.',
+                'content' => $this->getBlogPostContent('unlocking-inner-greatness'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2025-07-28'),
+                'meta_title' => 'Unlocking Your Inner Greatness - The Strengths Toolbox',
+                'meta_description' => 'The power of personal growth and investing in yourself.',
+                'meta_keywords' => 'personal growth, potential, self-improvement',
+                'category_slugs' => ['personal-coaching', 'strengths-based-coaching'],
+                'tag_slugs' => ['personal growth', 'potential', 'development'],
+            ],
+            [
+                'title' => 'Igniting Creativity: How to Find Inspiration in the Everyday',
+                'slug' => 'igniting-creativity-how-to-find-inspiration-in-the-everyday',
+                'excerpt' => 'Uncover the power of inspiration in everyday life. Learn practical strategies to spark creativity, stay motivated, and achieve your goals with ease.',
+                'content' => $this->getBlogPostContent('igniting-creativity-inspiration'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2025-07-25'),
+                'meta_title' => 'Igniting Creativity - The Strengths Toolbox',
+                'meta_description' => 'How to find inspiration and spark creativity in everyday life.',
+                'meta_keywords' => 'creativity, inspiration, motivation',
+                'category_slugs' => ['personal-coaching'],
+                'tag_slugs' => ['creativity', 'inspiration', 'motivation'],
+            ],
+            [
+                'title' => 'The Power of Mindset: Shaping Your Reality Through Thought',
+                'slug' => 'the-power-of-mindset-shaping-your-reality-through-thought',
+                'excerpt' => 'Unlock your potential by transforming your thoughts and mindset. Learn how your beliefs shape your reality and discover powerful strategies to create success in your life.',
+                'content' => $this->getBlogPostContent('power-of-mindset-reality'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2025-07-22'),
+                'meta_title' => 'The Power of Mindset - The Strengths Toolbox',
+                'meta_description' => 'How your mindset shapes your reality and creates success.',
+                'meta_keywords' => 'mindset, reality, success, personal development',
+                'category_slugs' => ['personal-coaching', 'strengths-based-coaching'],
+                'tag_slugs' => ['mindset', 'success', 'development'],
+            ],
+            [
+                'title' => 'How to Deliver a "Gold Standard" Service – Part 3: Handling Difficult Customers',
+                'slug' => 'gold-standard-service-part-3-handling-difficult-customers',
+                'excerpt' => 'Discover proven strategies for handling difficult customers with professionalism and empathy. Turn complaints into opportunities to enhance customer loyalty and satisfaction.',
+                'content' => $this->getBlogPostContent('gold-standard-service-part-3'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2025-07-18'),
+                'meta_title' => 'Gold Standard Service Part 3: Handling Difficult Customers - The Strengths Toolbox',
+                'meta_description' => 'Strategies for handling difficult customers with professionalism and empathy.',
+                'meta_keywords' => 'customer service, difficult customers, loyalty',
+                'category_slugs' => ['business-coaching'],
+                'tag_slugs' => ['customer service', 'difficult customers'],
+            ],
+            [
+                'title' => 'How to Deliver a "Gold Standard" Service – Part 1: 5 Essential Soft Skills',
+                'slug' => 'gold-standard-service-part-1-5-essential-soft-skills',
+                'excerpt' => 'Master the 5 essential soft skills for delivering Gold Standard Customer Service and enhance customer satisfaction to drive business success.',
+                'content' => $this->getBlogPostContent('gold-standard-service-part-1'),
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => Carbon::parse('2025-07-15'),
+                'meta_title' => 'Gold Standard Service Part 1: 5 Essential Soft Skills - The Strengths Toolbox',
+                'meta_description' => 'Five essential soft skills for gold standard customer service.',
+                'meta_keywords' => 'customer service, soft skills, gold standard',
+                'category_slugs' => ['business-coaching'],
+                'tag_slugs' => ['customer service', 'soft skills'],
+            ],
         ];
 
         foreach ($posts as $postData) {
+            $inv = $tsaInventory['by_slug'][$postData['slug']] ?? $tsaInventory['by_title'][$this->normalizeTitle($postData['title'])] ?? null;
+            if ($inv !== null) {
+                $postData['content'] = $inv['content_html'] ?? $postData['content'];
+                if (! empty($inv['excerpt'] ?? '')) {
+                    $postData['excerpt'] = $inv['excerpt'];
+                }
+                if (! empty($inv['published_at'] ?? '')) {
+                    try {
+                        $postData['published_at'] = Carbon::parse($inv['published_at']);
+                    } catch (\Throwable $e) {
+                        // keep existing
+                    }
+                }
+            }
+
             // Extract category and tag slugs
             $categorySlugs = $postData['category_slugs'] ?? [];
             $tagSlugs = $postData['tag_slugs'] ?? [];
@@ -593,6 +1102,80 @@ class BlogPostMigrationSeeder extends Seeder
 
             $this->command->line("  ✓ Created: {$postData['title']}");
         }
+
+        $seededNormalizedTitles = BlogPost::pluck('title')->map(fn ($t) => $this->normalizeTitle($t))->flip();
+        foreach ($tsaInventory['by_slug'] as $slug => $item) {
+            if (BlogPost::where('slug', $slug)->exists()) {
+                continue;
+            }
+            $itemTitle = $item['title'] ?? '';
+            if ($itemTitle !== '' && $seededNormalizedTitles->has($this->normalizeTitle($itemTitle))) {
+                continue;
+            }
+            if (BlogPost::where('title', $itemTitle)->exists()) {
+                continue;
+            }
+            $publishedAt = null;
+            if (! empty($item['published_at'] ?? '')) {
+                try {
+                    $publishedAt = Carbon::parse($item['published_at']);
+                } catch (\Throwable $e) {
+                }
+            }
+            $post = BlogPost::create([
+                'title' => $item['title'] ?? 'Untitled',
+                'slug' => $slug,
+                'excerpt' => $item['excerpt'] ?? '',
+                'content' => $item['content_html'] ?? '<p></p>',
+                'author_id' => $author->id,
+                'is_published' => true,
+                'published_at' => $publishedAt ?? now(),
+            ]);
+            $categoryIds = Category::whereIn('slug', ['business-coaching'])->pluck('id');
+            $post->categories()->sync($categoryIds);
+            $this->command->line("  ✓ Created from TSA: {$post->title}");
+        }
+    }
+
+    /**
+     * Load TSA blog inventory from JSON (slug, title, content_html, excerpt, published_at).
+     * Returns ['by_slug' => [slug => item], 'by_title' => [normalized_title => item]].
+     */
+    protected function loadTsaInventory(): array
+    {
+        $path = base_path('content-migration/tsa-blog-inventory.json');
+        if (! file_exists($path)) {
+            return ['by_slug' => [], 'by_title' => []];
+        }
+        $raw = json_decode(file_get_contents($path), true);
+        if (! is_array($raw)) {
+            return ['by_slug' => [], 'by_title' => []];
+        }
+        $bySlug = [];
+        $byTitle = [];
+        foreach ($raw as $item) {
+            $slug = $item['slug'] ?? '';
+            $title = $item['title'] ?? '';
+            if ($slug !== '') {
+                $bySlug[$slug] = $item;
+            }
+            if ($title !== '') {
+                $byTitle[$this->normalizeTitle($title)] = $item;
+            }
+        }
+
+        return ['by_slug' => $bySlug, 'by_title' => $byTitle];
+    }
+
+    protected function normalizeTitle(string $title): string
+    {
+        $t = trim(preg_replace('/\s+/', ' ', $title));
+        $t = html_entity_decode($t, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $curlyDouble = ["\u{201C}", "\u{201D}"];
+        $curlySingle = ["\u{2018}", "\u{2019}"];
+        $t = str_replace(array_merge($curlyDouble, $curlySingle, ['"', '"', "'", "'"]), array_merge(['"', '"'], ["'", "'"], ['"', '"', "'", "'"]), $t);
+
+        return mb_strtolower($t);
     }
 
     /**
@@ -2209,6 +2792,252 @@ HTML,
     <p>Invest in yourself by developing your strengths, expanding your skills, and growing your self-awareness. Invest in your health, your relationships, and your mindset. Read, learn, get coaching, take courses, and put yourself in environments that stretch you. The return on this investment is unlimited.</p>
     <h3>Conclusion</h3>
     <p>The best investment anyone can make is yourself. Don't neglect it. You're worth it.</p>
+</div>
+HTML,
+            'aligning-tasks-to-talent' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>Aligning Tasks to Talent Using a Strengths-Based Approach</h2>
+    <p>Unlocking potential through strengths alignment. In today's fast-paced workplace, leveraging employee strengths is a game changer for boosting productivity, engagement, and job satisfaction. The strengths-based approach focuses on identifying and maximizing individual strengths rather than fixing weaknesses.</p>
+    <p>When tasks are aligned to talent, people perform at their best, feel more engaged, and contribute more effectively. The Strengths Toolbox helps organizations apply this approach through assessments, coaching, and team development.</p>
+</div>
+HTML,
+            'art-of-conflict-resolution' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>The Art of Conflict Resolution: Building Stronger Teams Together</h2>
+    <p>Discover practical strategies for workplace conflict resolution that build stronger teams, promote collaboration, and enhance leadership effectiveness across organizations. Effective conflict resolution creates psychological safety and helps teams perform at their best.</p>
+    <p>The Strengths Toolbox supports teams and leaders in understanding different strengths and communication styles, which reduces conflict and builds stronger working relationships.</p>
+</div>
+HTML,
+            'difficult-conversations-feedback' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>Difficult Conversations &amp; Feedback: How to Handle Tough Talks and Deliver Constructive Criticism</h2>
+    <p>Difficult conversations are key to effective leadership. This guide shares principles, the SBI model (Situation, Behaviour, Impact), and strategies to deliver constructive feedback, manage emotions, and turn tough talks into growth opportunities for individuals and teams.</p>
+    <p>Leaders who master these skills build trust and drive performance. The Strengths Toolbox helps managers and leaders develop the confidence and techniques needed for these important conversations.</p>
+</div>
+HTML,
+            'weakness-fixing-to-strengths-building' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>From Weakness Fixing to Strengths Building: The Manager's Guide to Team Performance</h2>
+    <p>Move from weakness-fixing to strengths-building leadership. Discover practical strategies for managers to identify, develop, and leverage team members' strengths, creating motivated, high-performing teams and fostering lasting workplace success.</p>
+    <p>When managers focus on strengths, engagement and results improve. The Strengths Toolbox provides frameworks and coaching to help leaders make this shift.</p>
+</div>
+HTML,
+            'strengths-based-leadership' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>Strengths-Based Leadership: Leveraging Individual Strengths to Create Dynamic Teams</h2>
+    <p>Strengths-based leadership empowers teams by focusing on individual talents. Discover practical steps to identify, align, and develop strengths, fostering collaboration, motivation, and high performance across your organization.</p>
+    <p>The Strengths Toolbox supports leaders with CliftonStrengths and tailored programmes for teams, managers, and salespeople.</p>
+</div>
+HTML,
+            'importance-of-mentorship' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>The Importance of Mentorship: Stories and Tips on Finding and Being a Mentor as a Leader</h2>
+    <p>Mentorship accelerates leadership growth by connecting experience with potential. Learn why it matters, how to find the right mentor, and practical tips for becoming an effective mentor yourself.</p>
+    <p>Leaders who invest in mentorship build stronger pipelines and more engaged teams. The Strengths Toolbox encourages a culture of development and mentorship.</p>
+</div>
+HTML,
+            'psychological-safety-at-work' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>Psychological Safety at Work</h2>
+    <p>Psychological safety empowers teams to innovate, collaborate, and thrive. This article explores why it matters, the risks of lacking it, and practical strategies leaders can use to build safe, resilient, and high-performing workplaces.</p>
+    <p>When people feel safe to speak up and take risks, performance and innovation increase. The Strengths Toolbox helps leaders create environments where strengths can flourish.</p>
+</div>
+HTML,
+            'overcoming-imposter-syndrome' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>Overcoming Imposter Syndrome: Essential Advice for New and Seasoned Managers</h2>
+    <p>Imposter syndrome affects new and seasoned managers alike. This guide shares nine proven strategies to overcome self-doubt, embrace confidence, and lead authentically while fostering a supportive, growth-driven workplace culture.</p>
+    <p>Understanding your strengths through tools like CliftonStrengths can reduce imposter feelings by clarifying your unique contributions. The Strengths Toolbox supports leaders in building confidence and authenticity.</p>
+</div>
+HTML,
+            'navigating-management-styles' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>Navigating Different Management Styles: Comparing Authoritarian, Democratic, and Coaching Styles</h2>
+    <p>Unlock the secrets to effective management by exploring the strengths, drawbacks, and best-use cases for Authoritarian, Democratic, and Coaching leadership styles. One of the most important skills for leaders is knowing when to apply each style.</p>
+    <p>A strengths-based approach helps leaders understand their natural style and when to flex. The Strengths Toolbox helps managers and leaders develop this awareness and adaptability.</p>
+</div>
+HTML,
+            // TSA blog pages 2–4 placeholders (full content can be fetched from TSA article URLs)
+            'close-challenging-sale' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>How to Close a Challenging Sale: Proven Strategies for Re-Engaging Silent Prospects</h2>
+    <p>Closing a sale is never easy, but closing a challenging sale—where a once-promising prospect suddenly goes silent—can feel especially daunting. Learn proven strategies to re-engage silent prospects and seal deals.</p>
+    <p>The Strengths Toolbox supports sales professionals with frameworks and coaching to build confidence and close more effectively.</p>
+</div>
+HTML,
+            'power-of-strengths-teamwork' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>The Power of Strengths in Teamwork</h2>
+    <p>Discover how focusing on strengths boosts teamwork and results. Key lessons for managers to unlock talents, align roles, and build a culture of growth.</p>
+    <p>The Strengths Toolbox helps teams leverage CliftonStrengths and collaborative practices for higher performance.</p>
+</div>
+HTML,
+            'daily-habits-salespeople' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>Daily Habits of Successful Salespeople</h2>
+    <p>Success in sales isn't accidental—it's built on consistent daily habits. From powerful morning routines to relentless prospecting and reflection, we break down the proven habits of top sales performers.</p>
+    <p>The Strengths Toolbox sales courses and coaching help salespeople build these habits into their routine.</p>
+</div>
+HTML,
+            'building-trust-credibility' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>Building Trust and Credibility: The Fundamentals of Trust-Building and Authentic Leadership</h2>
+    <p>Trust and credibility are the foundation of impactful leadership. Learn practical strategies to lead with authenticity, accountability, and lasting influence.</p>
+    <p>The Strengths Toolbox supports leaders with strengths-based development and executive coaching.</p>
+</div>
+HTML,
+            'five-qualities-emotional-intelligence' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>Five Qualities to Elevate Your Emotional Intelligence</h2>
+    <p>Emotional intelligence (EI) is crucial for success in the workplace. It extends beyond intellectual capability, enabling individuals to navigate interpersonal relationships effectively.</p>
+    <p>Developing these qualities improves leadership, collaboration, and performance. The Strengths Toolbox helps individuals and teams grow their EI.</p>
+</div>
+HTML,
+            'emotions-communication-ei' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>The Roles of "Emotions" and "Communication" in Elevating Emotional Intelligence</h2>
+    <p>Emotional intelligence (EI) is essential for personal and professional growth. It involves recognizing and managing your emotions while effectively understanding the emotions of others.</p>
+    <p>This article explores how emotions and communication work together to elevate EI in the workplace.</p>
+</div>
+HTML,
+            'tools-regulate-emotions' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>Tools to Regulate Your Emotions</h2>
+    <p>Emotional regulation is a crucial skill for personal and professional success. It's not just about having the desire to change but also about understanding situations from different perspectives.</p>
+    <p>The Strengths Toolbox supports individuals and teams with practical tools for self-management and resilience.</p>
+</div>
+HTML,
+            'role-ei-at-work' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>The Role of Emotional Intelligence at Work</h2>
+    <p>Emotional intelligence influences how we lead, communicate, and collaborate. Learn how self-awareness, empathy, and constructive dialogue shape a productive workplace.</p>
+    <p>Leaders who develop EI build stronger teams and better outcomes. The Strengths Toolbox helps organisations embed EI into culture.</p>
+</div>
+HTML,
+            'gold-standard-service-part-2' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>How to Deliver a "Gold Standard" Service – Part 2: Identifying and Addressing Customer Needs</h2>
+    <p>Exceptional service starts with truly understanding your customers. Learn how to meet needs, foster loyalty, and go beyond expectations by mastering the fundamentals of gold standard customer care.</p>
+    <p>The Strengths Toolbox supports teams with customer service workshops and facilitation.</p>
+</div>
+HTML,
+            'unlocking-potential-thoughts-reality' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>Unlocking Your Potential: How Your Thoughts Create Your Reality</h2>
+    <p>Your thoughts shape your world. Learn how to overcome limiting beliefs, shift your mindset, and create the reality you desire through practical insights and empowering strategies backed by psychology.</p>
+    <p>The Strengths Toolbox helps individuals and teams unlock potential through strengths-based development.</p>
+</div>
+HTML,
+            'spark-within-inspiration' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>The Spark Within: Finding Inspiration in Everyday Life</h2>
+    <p>Inspiration isn't a random moment—it's a mindset you can cultivate. Discover how to spark creativity, gain motivation, and embrace the extraordinary in everyday life through nature, mindfulness, and goal setting.</p>
+    <p>Personal coaching and strengths-based development at The Strengths Toolbox support this journey.</p>
+</div>
+HTML,
+            'invest-potential-self-improvement' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>Invest in Your Potential: A Guide to Self-Improvement</h2>
+    <p>Investing in your potential is the smartest decision you'll ever make. Learn how to unlock your personal growth, overcome obstacles, and embrace practical steps that lead to a more confident, fulfilled, and successful you.</p>
+    <p>The Strengths Toolbox offers coaching and programmes to help you invest in yourself.</p>
+</div>
+HTML,
+            'effectively-close-sales' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>How to Effectively Close Sales: Mastering the Art of the Sale</h2>
+    <p>Master the art of closing with proven sales strategies that build trust, handle objections, and guide your prospects to a confident "yes."</p>
+    <p>The Strengths Toolbox sales courses cover closing techniques and relationship selling.</p>
+</div>
+HTML,
+            'personalization-at-scale-outreach' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>Personalization at Scale in Outreach: How to Connect Authentically with Large Audiences</h2>
+    <p>In today's competitive market, generic outreach no longer works. Learn how to use personalization at scale to create relevant, authentic connections that drive real results.</p>
+    <p>Sales and facilitation programmes at The Strengths Toolbox support effective outreach and communication.</p>
+</div>
+HTML,
+            'mastering-cold-calling' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>Mastering Cold Calling: Techniques and How to Overcome Call Reluctance</h2>
+    <p>Cold calling remains one of the most effective sales strategies, yet many salespeople struggle with it due to call reluctance. This guide explores why cold calling still matters and shares proven techniques.</p>
+    <p>The Strengths Toolbox "Selling On The Phone" course and sales programmes build these skills.</p>
+</div>
+HTML,
+            'unlocking-sales-success-motivation-mindset' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>Unlocking Sales Success: Motivation and Mindset Mastery</h2>
+    <p>A practical guide for sales professionals looking to reignite their drive and build a growth-oriented mindset. Actionable strategies to manage daily motivation, develop a purpose-driven sales approach, overcome burnout, and create deeper client connections.</p>
+    <p>The Strengths Toolbox supports salespeople with courses and coaching on mindset and performance.</p>
+</div>
+HTML,
+            'teams-sustain-strengths-approach' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>How Teams Can Sustain a Strengths-Based Approach: A Comprehensive Guide</h2>
+    <p>Unlock higher performance and engagement with a strengths-based approach. Learn how winning teams leverage individual talents to build a thriving, resilient culture. Practical steps for embedding strengths into leadership, feedback, and daily collaboration.</p>
+    <p>The Strengths Toolbox specialises in strengths-based team development and ongoing support.</p>
+</div>
+HTML,
+            'managers-teams-benefit-strengths' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>How Managers and Teams Benefit by Focusing on Strengths</h2>
+    <p>When managers and teams focus on strengths, engagement and results improve. Learn mindset shifts, practice techniques, and structured routines that help organisations thrive.</p>
+    <p>The Strengths Toolbox helps managers and teams apply strengths-based development in practice.</p>
+</div>
+HTML,
+            'overcoming-call-reluctance-sales' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>Overcoming Call Reluctance in Sales: Strategies for Success</h2>
+    <p>Overcome call reluctance with proven strategies to boost confidence, improve sales performance, and achieve success. Learn mindset shifts, practice techniques, and structured routines.</p>
+    <p>Sales courses and coaching at The Strengths Toolbox address call reluctance and phone selling.</p>
+</div>
+HTML,
+            'effective-prospecting-sales' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>Effective Prospecting in Sales: Strategies for Success</h2>
+    <p>Master sales prospecting with proven strategies to identify and convert high-quality leads. Learn how to personalize outreach, use multiple channels, and nurture lasting relationships.</p>
+    <p>The Strengths Toolbox sales courses cover prospecting and lead generation.</p>
+</div>
+HTML,
+            'getting-past-gatekeeper' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>Getting Past the Gatekeeper: Strategies for Sales Success</h2>
+    <p>Discover effective strategies to get past gatekeepers and reach decision-makers. Leverage referrals, build rapport, and use strategic timing to boost your sales success.</p>
+    <p>Sales training at The Strengths Toolbox includes strategies for reaching decision-makers.</p>
+</div>
+HTML,
+            'unlocking-inner-greatness' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>Unlocking Your Inner Greatness: The Power of Personal Growth</h2>
+    <p>Investing in yourself is the key to unlocking your full potential. By focusing on personal growth, skill development, and self-care, you can transform your life, open doors to new opportunities, and achieve lasting success.</p>
+    <p>The Strengths Toolbox supports personal growth through coaching and strengths-based development.</p>
+</div>
+HTML,
+            'igniting-creativity-inspiration' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>Igniting Creativity: How to Find Inspiration in the Everyday</h2>
+    <p>Uncover the power of inspiration in everyday life. Learn practical strategies to spark creativity, stay motivated, and achieve your goals with ease.</p>
+    <p>Coaching and facilitation at The Strengths Toolbox help individuals and teams tap into creativity.</p>
+</div>
+HTML,
+            'power-of-mindset-reality' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>The Power of Mindset: Shaping Your Reality Through Thought</h2>
+    <p>Unlock your potential by transforming your thoughts and mindset. Learn how your beliefs shape your reality and discover powerful strategies to create success in your life.</p>
+    <p>The Strengths Toolbox helps individuals and leaders develop a growth mindset through strengths-based approaches.</p>
+</div>
+HTML,
+            'gold-standard-service-part-3' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>How to Deliver a "Gold Standard" Service – Part 3: Handling Difficult Customers</h2>
+    <p>Discover proven strategies for handling difficult customers with professionalism and empathy. Turn complaints into opportunities to enhance customer loyalty and satisfaction.</p>
+    <p>Customer service workshops at The Strengths Toolbox cover difficult conversations and service recovery.</p>
+</div>
+HTML,
+            'gold-standard-service-part-1' => <<<'HTML'
+<div class="prose prose-lg max-w-none">
+    <h2>How to Deliver a "Gold Standard" Service – Part 1: 5 Essential Soft Skills</h2>
+    <p>Master the 5 essential soft skills for delivering Gold Standard Customer Service and enhance customer satisfaction to drive business success.</p>
+    <p>The Strengths Toolbox facilitation and workshops support soft skills development.</p>
 </div>
 HTML,
         ];

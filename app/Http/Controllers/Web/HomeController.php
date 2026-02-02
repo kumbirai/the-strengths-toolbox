@@ -65,8 +65,8 @@ class HomeController extends Controller
 
         // Override with homepage-specific meta
         $seo['title'] = 'The Strengths Toolbox - Build Strong Teams. Unlock Strong Profits.';
-        $seo['description'] = 'Transform your team with strengths-based development programs. Build strong teams, unlock strong profits with proven training in team building, sales training, and leadership development.';
-        $seo['keywords'] = 'strengths-based development, team building, sales training, CliftonStrengths, leadership development, South Africa';
+        $seo['description'] = 'Transform your team with strengths-based development programs. Build strong teams, unlock strong profits with proven training in team building, sales courses, and leadership development.';
+        $seo['keywords'] = 'strengths-based development, team building, sales courses, CliftonStrengths, leadership development, South Africa';
         $seo['canonical'] = url('/');
         $seo['og_title'] = $seo['title'];
         $seo['og_description'] = $seo['description'];

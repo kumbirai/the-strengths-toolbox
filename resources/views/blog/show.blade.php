@@ -70,6 +70,7 @@
                     src="{{ asset('storage/' . $post->featured_image) }}"
                     alt="{{ $post->title }}"
                     class="w-full aspect-video object-cover rounded-xl shadow-xl"
+                    onerror="this.onerror=null; this.src='{{ asset('images/placeholder-blog.svg') }}'; this.alt='';"
                 >
             </div>
         </div>

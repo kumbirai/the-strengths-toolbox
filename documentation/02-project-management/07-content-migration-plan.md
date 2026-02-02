@@ -624,6 +624,19 @@ SELECT * FROM testimonials WHERE testimonial LIKE '%TSA Business School%';
 - Content caching optimization
 - Database query optimization
 
+### 11.4 Post-Migration Image Setup (Local Storage)
+
+All images are kept in local storage. After deployment or fresh seed:
+
+1. **Storage link** (if not already created): `php artisan storage:link`
+2. **Sales Courses images** (TSA originals downloaded locally):  
+   `php artisan content:download-sales-courses-images`  
+   Saves to `storage/app/public/sales-courses/` (served at `/storage/sales-courses/`).
+3. **Blog featured images** (TSA blog posts):  
+   `php artisan blog:download-tsa-images`  
+   Uses `content-migration/images/image-mapping.json` (entries with `source_url` and `blog_post_slug`).  
+   Saves to `storage/app/public/blog/` and assigns `featured_image` to matching posts.
+
 ---
 
 **Document Version:** 1.0  

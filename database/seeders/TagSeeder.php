@@ -43,7 +43,7 @@ class TagSeeder extends Seeder
             // Sales tags
             ['name' => 'Sales Goals', 'slug' => 'sales-goals'],
             ['name' => 'Sales Performance', 'slug' => 'sales-performance'],
-            ['name' => 'Sales Training', 'slug' => 'sales-training'],
+            ['name' => 'Sales Courses', 'slug' => 'sales-courses'],
             ['name' => 'Strengths-Based Selling', 'slug' => 'strengths-based-selling'],
             ['name' => 'Sales Strategies', 'slug' => 'sales-strategies'],
             ['name' => 'Sales Talent', 'slug' => 'sales-talent'],

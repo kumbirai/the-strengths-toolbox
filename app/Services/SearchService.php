@@ -251,7 +251,7 @@ class SearchService
         return collect([
             'strengths-based development',
             'team building',
-            'sales training',
+            'sales courses',
             'leadership development',
             'strengths programme',
         ])->take($limit);

@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             MediaSeeder::class, // Restore images from optimized directory and assign to blog posts
             FormSeeder::class,
             TestimonialSeeder::class,
+            PopulateImageStorageSeeder::class, // Sales Courses + blog images (download to storage, assign blog featured_image)
         ]);
     }
 }

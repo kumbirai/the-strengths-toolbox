@@ -46,13 +46,15 @@ class PageController extends Controller
             $seo['canonical'] = route('about-us');
             $seo['og_url'] = route('about-us');
 
-            // Get Eberhard's image from media library - use Sales Training image from TSA (matches source website)
+            // Get Eberhard's image from media library (sales-courses or legacy sales-training filename)
             $eberhardImage = \App\Models\Media::where(function ($query) {
-                $query->where('filename', 'like', '%sales-training%')
+                $query->where('filename', 'like', '%sales-courses%')
+                    ->orWhere('filename', 'like', '%sales-training%')
+                    ->orWhere('original_filename', 'like', '%Sales-Courses%')
                     ->orWhere('original_filename', 'like', '%Sales-Training%');
             })->first();
 
-            // Fallback to Eberhard_Pic if Sales Training image not found
+            // Fallback to Eberhard_Pic if not found
             if (! $eberhardImage) {
                 $eberhardImage = \App\Models\Media::where(function ($query) {
                     $query->where('filename', 'like', '%eberhard%')
@@ -81,7 +83,9 @@ class PageController extends Controller
             // Get SEO metadata
             $seo = $this->seoService->getPageMeta($page);
 
-            $response = response()->view('web.pages.show', compact('page', 'seo'));
+            // No hero image from media for dynamic pages; Sales Courses use per-course images in content
+            $pageImage = null;
+            $response = response()->view('web.pages.show', compact('page', 'seo', 'pageImage'));
 
             // Set ETag based on page content and last modified
             $etag = md5($page->id.$page->updated_at->timestamp);

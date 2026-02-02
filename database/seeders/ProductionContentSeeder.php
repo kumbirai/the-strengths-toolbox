@@ -55,9 +55,9 @@ class ProductionContentSeeder extends Seeder
                 'is_active' => true,
             ],
             [
-                'name' => 'Sales Training',
-                'slug' => 'sales-training',
-                'description' => 'Sales strategies and training techniques',
+                'name' => 'Sales Courses',
+                'slug' => 'sales-courses',
+                'description' => 'Sales courses and training techniques',
                 'is_active' => true,
             ],
             [

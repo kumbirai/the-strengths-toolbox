@@ -8,7 +8,10 @@ use Illuminate\Database\Seeder;
 
 /**
  * Comprehensive content migration seeder
- * Populates CMS with all pages from existing website
+ * Populates CMS with all pages from existing website.
+ *
+ * Sales Courses images are stored locally at storage/app/public/sales-courses/.
+ * Run: php artisan content:download-sales-courses-images
  */
 class ContentMigrationSeeder extends Seeder
 {
@@ -24,7 +27,7 @@ class ContentMigrationSeeder extends Seeder
 
         // Import existing content pages
         $this->seedStrengthsBasedDevelopmentPages();
-        $this->seedSalesTrainingPages();
+        $this->seedSalesCoursesPages();
         $this->seedFacilitationPages();
         $this->seedStandalonePages();
 
@@ -50,8 +53,8 @@ class ContentMigrationSeeder extends Seeder
             'slug' => 'home',
             'excerpt' => 'Transform your business with strengths-based development. Build strong teams and unlock strong profits.',
             'content' => $homepageContent,
-            'meta_title' => 'The Strengths Toolbox - Build Strong Teams, Unlock Strong Profits',
-            'meta_description' => 'Transform your business with strengths-based development. Discover how The Strengths Toolbox helps teams achieve peak performance and drive sustainable growth.',
+            'meta_title' => 'The Strengths Toolbox | Strong Teams, Strong Profits',
+            'meta_description' => 'Transform your business with strengths-based development. The Strengths Toolbox helps teams achieve peak performance and drive sustainable growth. Learn more.',
             'meta_keywords' => 'strengths-based development, team building, business growth, CliftonStrengths, team performance',
             'is_published' => true,
             'published_at' => Carbon::now(),
@@ -78,7 +81,7 @@ class ContentMigrationSeeder extends Seeder
             'slug' => 'strengths-programme',
             'excerpt' => 'Unlock growth through the Power of Strengths. Discover proven programs for individuals, managers, salespeople, and teams.',
             'content' => $content,
-            'meta_title' => 'Strengths Programme - Unlock Growth Through Strengths - The Strengths Toolbox',
+            'meta_title' => 'Strengths Programme | The Strengths Toolbox',
             'meta_description' => 'Discover how strengths-based development transforms teams and drives business growth. Four proven programs for individuals, managers, salespeople, and teams.',
             'meta_keywords' => 'strengths programme, strengths-based development, team development, leadership training, sales training',
             'is_published' => true,
@@ -141,8 +144,8 @@ class ContentMigrationSeeder extends Seeder
                 'slug' => 'strengths-based-development/teams',
                 'excerpt' => 'Build cohesive teams where members understand and complement each other\'s strengths.',
                 'content' => $this->getTeamsContent(),
-                'meta_title' => 'Team Development - Strengths-Based Approach - The Strengths Toolbox',
-                'meta_description' => 'Transform your team with strengths-based development. Build stronger collaboration and improve team performance.',
+                'meta_title' => 'Strengths-Based Team Development | The Strengths Toolbox',
+                'meta_description' => 'Transform your team with strengths-based development. Build stronger collaboration, improve team performance, and align roles with natural talents.',
                 'meta_keywords' => 'team building, team development, strengths-based teams, team collaboration',
                 'is_published' => true,
                 'published_at' => Carbon::now(),
@@ -152,8 +155,8 @@ class ContentMigrationSeeder extends Seeder
                 'slug' => 'strengths-based-development/managers-leaders',
                 'excerpt' => 'Develop authentic leadership styles and build high-performing teams through strengths-based management.',
                 'content' => $this->getManagersLeadersContent(),
-                'meta_title' => 'Leadership Development - Strengths-Based Management - The Strengths Toolbox',
-                'meta_description' => 'Develop your leadership skills with strengths-based management. Learn to lead with authenticity and build high-performing teams.',
+                'meta_title' => 'Strengths-Based Leadership | The Strengths Toolbox',
+                'meta_description' => 'Develop your leadership skills with strengths-based management. Lead with authenticity, build high-performing teams, and develop talent effectively.',
                 'meta_keywords' => 'leadership development, management training, strengths-based leadership, team management',
                 'is_published' => true,
                 'published_at' => Carbon::now(),
@@ -163,7 +166,7 @@ class ContentMigrationSeeder extends Seeder
                 'slug' => 'strengths-based-development/salespeople',
                 'excerpt' => 'Transform sales performance by understanding and leveraging your natural selling strengths.',
                 'content' => $this->getSalespeopleContent(),
-                'meta_title' => 'Sales Training - Strengths-Based Selling - The Strengths Toolbox',
+                'meta_title' => 'Strengths-Based Sales Development | The Strengths Toolbox',
                 'meta_description' => 'Improve your sales performance with strengths-based selling. Discover your natural selling strengths and close more deals.',
                 'meta_keywords' => 'sales training, sales development, strengths-based selling, sales performance',
                 'is_published' => true,
@@ -174,8 +177,8 @@ class ContentMigrationSeeder extends Seeder
                 'slug' => 'strengths-based-development/individuals',
                 'excerpt' => 'Discover your unique strengths and learn how to leverage them for personal and professional growth.',
                 'content' => $this->getIndividualsContent(),
-                'meta_title' => 'Individual Development - Discover Your Strengths - The Strengths Toolbox',
-                'meta_description' => 'Discover your unique strengths and unlock your potential. Personal development through strengths-based approach.',
+                'meta_title' => 'Individual Strengths Development | The Strengths Toolbox',
+                'meta_description' => 'Discover your unique strengths and unlock your potential. Personal development through a strengths-based approach with CliftonStrengths.',
                 'meta_keywords' => 'personal development, strengths assessment, individual growth, career development',
                 'is_published' => true,
                 'published_at' => Carbon::now(),
@@ -191,92 +194,71 @@ class ContentMigrationSeeder extends Seeder
     }
 
     /**
-     * Seed Sales Training pages
+     * Seed Sales Courses pages (parent + 4 courses from TSA sales-courses content)
      */
-    protected function seedSalesTrainingPages(): void
+    protected function seedSalesCoursesPages(): void
     {
-        $this->command->info('Seeding Sales Training pages...');
+        $this->command->info('Seeding Sales Courses pages...');
 
-        // Create parent page first
-        $parentPage = Page::firstOrNew(['slug' => 'sales-training']);
+        $bookingUrl = '/booking';
+
+        $parentPage = Page::firstOrNew(['slug' => 'sales-courses']);
         $parentPage->fill([
-            'title' => 'Sales Training',
-            'slug' => 'sales-training',
-            'excerpt' => 'Transform your sales team with proven training programs. Discover strengths-based sales training, relationship selling, phone sales, and more.',
-            'content' => '<div class="prose prose-lg max-w-none"><h2>Sales Training Programs</h2><p>Transform your sales team with proven training programs designed to leverage natural strengths and build lasting client relationships.</p><div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6"><a href="/sales-training/strengths-based-training" class="block p-4 border rounded-lg hover:bg-gray-50"><h3 class="font-semibold">Strengths-Based Training</h3><p class="text-sm text-gray-600">Leverage natural selling talents for better results</p></a><a href="/sales-training/relationship-selling" class="block p-4 border rounded-lg hover:bg-gray-50"><h3 class="font-semibold">Relationship Selling</h3><p class="text-sm text-gray-600">Build lasting client relationships</p></a><a href="/sales-training/selling-on-the-phone" class="block p-4 border rounded-lg hover:bg-gray-50"><h3 class="font-semibold">Selling On The Phone</h3><p class="text-sm text-gray-600">Master phone sales techniques</p></a><a href="/sales-training/sales-fundamentals-workshop" class="block p-4 border rounded-lg hover:bg-gray-50"><h3 class="font-semibold">Sales Fundamentals Workshop</h3><p class="text-sm text-gray-600">Essential skills for sales success</p></a><a href="/sales-training/top-10-sales-secrets" class="block p-4 border rounded-lg hover:bg-gray-50"><h3 class="font-semibold">Top 10 Sales Secrets</h3><p class="text-sm text-gray-600">Proven secrets from successful salespeople</p></a><a href="/sales-training/in-person-sales" class="block p-4 border rounded-lg hover:bg-gray-50"><h3 class="font-semibold">In-Person Sales</h3><p class="text-sm text-gray-600">Excel at face-to-face selling</p></a></div></div>',
-            'meta_title' => 'Sales Training - The Strengths Toolbox',
-            'meta_description' => 'Transform your sales team with proven training programs. Strengths-based sales training, relationship selling, phone sales, and more.',
-            'meta_keywords' => 'sales training, sales coaching, sales development, strengths-based selling',
+            'title' => 'Sales Courses',
+            'slug' => 'sales-courses',
+            'excerpt' => 'At The Strengths Toolbox, we\'ve designed 4 powerful sales courses to transform the way you and your team sell. Whether you\'re just starting out or ready to master advanced strategies.',
+            'content' => $this->getSalesCoursesContent('parent', $bookingUrl),
+            'meta_title' => 'Sales Courses - The Strengths Toolbox',
+            'meta_description' => 'Transform the way you and your team sell. Sales courses from fundamentals to advanced techniques, relationship selling, mindset, and selling on the phone.',
+            'meta_keywords' => 'sales courses, sales training, sales workshops, relationship selling, South Africa',
             'is_published' => true,
             'published_at' => Carbon::now(),
         ]);
         $parentPage->save();
-        $this->command->line('  ✓ Created: Sales Training (parent page)');
+        $this->command->line('  ✓ Created: Sales Courses (parent page)');
 
         $pages = [
             [
-                'title' => 'Strengths-Based Sales Training',
-                'slug' => 'sales-training/strengths-based-training',
-                'excerpt' => 'Transform your sales team with strengths-based training that leverages natural selling talents.',
-                'content' => $this->getSalesTrainingContent('strengths-based'),
-                'meta_title' => 'Strengths-Based Sales Training - The Strengths Toolbox',
-                'meta_description' => 'Transform your sales team with strengths-based training. Leverage natural selling talents for better results.',
-                'meta_keywords' => 'sales training, strengths-based selling, sales development, sales coaching',
+                'title' => 'Sales Fundamentals & Advanced Techniques',
+                'slug' => 'sales-courses/sales-fundamentals-and-advanced-techniques',
+                'excerpt' => 'Combine essential sales fundamentals with advanced strategies. Goal setting, prospecting, presenting, handling objections, closing, negotiation, and self-motivation.',
+                'content' => $this->getSalesCoursesContent('fundamentals-advanced', $bookingUrl),
+                'meta_title' => 'Sales Fundamentals & Advanced | The Strengths Toolbox',
+                'meta_description' => 'Master sales from fundamentals to advanced. Essential and advanced sales skills in one comprehensive course. Book your seat today.',
+                'meta_keywords' => 'sales fundamentals, advanced sales techniques, sales workshop, prospecting, closing',
                 'is_published' => true,
                 'published_at' => Carbon::now(),
             ],
             [
-                'title' => 'Relationship Selling',
-                'slug' => 'sales-training/relationship-selling',
-                'excerpt' => 'Build lasting client relationships through proven relationship selling techniques.',
-                'content' => $this->getSalesTrainingContent('relationship'),
-                'meta_title' => 'Relationship Selling Training - The Strengths Toolbox',
-                'meta_description' => 'Master relationship selling to build lasting client relationships and increase sales success.',
-                'meta_keywords' => 'relationship selling, sales techniques, client relationships, sales training',
+                'title' => 'Mastering Relationship Selling Workshop',
+                'slug' => 'sales-courses/mastering-relationship-selling',
+                'excerpt' => 'Develop lasting customer relationships that generate repeat business and referrals. Trust building and authentic connection.',
+                'content' => $this->getSalesCoursesContent('relationship-selling', $bookingUrl),
+                'meta_title' => 'Mastering Relationship Selling | The Strengths Toolbox',
+                'meta_description' => 'Build lasting customer relationships through trust, authentic connection, and long-term value creation. Workshop for sales teams.',
+                'meta_keywords' => 'relationship selling, customer relationships, trust building, sales workshop',
+                'is_published' => true,
+                'published_at' => Carbon::now(),
+            ],
+            [
+                'title' => 'The Mindset of a Super Salesperson',
+                'slug' => 'sales-courses/mindset-of-a-super-salesperson',
+                'excerpt' => 'Emotional intelligence, positive psychological traits, and self-motivation. Turn setbacks into stepping stones and create a positive mindset.',
+                'content' => $this->getSalesCoursesContent('mindset-super-salesperson', $bookingUrl),
+                'meta_title' => 'The Mindset of a Super Salesperson - The Strengths Toolbox',
+                'meta_description' => 'Develop the mindset of a super salesperson. Emotional intelligence, self-motivation, and positive psychology for sales success.',
+                'meta_keywords' => 'sales mindset, emotional intelligence, self-motivation, sales psychology',
                 'is_published' => true,
                 'published_at' => Carbon::now(),
             ],
             [
                 'title' => 'Selling On The Phone',
-                'slug' => 'sales-training/selling-on-the-phone',
-                'excerpt' => 'Master phone sales techniques to close more deals and build stronger client connections.',
-                'content' => $this->getSalesTrainingContent('phone'),
-                'meta_title' => 'Phone Sales Training - Selling On The Phone - The Strengths Toolbox',
-                'meta_description' => 'Master phone sales techniques. Learn to close deals and build relationships over the phone.',
-                'meta_keywords' => 'phone sales, telemarketing, phone selling, sales calls, telephone sales',
-                'is_published' => true,
-                'published_at' => Carbon::now(),
-            ],
-            [
-                'title' => 'Sales Fundamentals Workshop',
-                'slug' => 'sales-training/sales-fundamentals-workshop',
-                'excerpt' => 'Master the fundamentals of sales with our comprehensive workshop covering essential selling skills.',
-                'content' => $this->getSalesTrainingContent('fundamentals'),
-                'meta_title' => 'Sales Fundamentals Workshop - The Strengths Toolbox',
-                'meta_description' => 'Master sales fundamentals with our comprehensive workshop. Essential skills for sales success.',
-                'meta_keywords' => 'sales fundamentals, sales workshop, sales basics, sales skills',
-                'is_published' => true,
-                'published_at' => Carbon::now(),
-            ],
-            [
-                'title' => 'Top 10 Sales Secrets',
-                'slug' => 'sales-training/top-10-sales-secrets',
-                'excerpt' => 'Discover the top 10 proven sales secrets that successful salespeople use to close more deals.',
-                'content' => $this->getSalesTrainingContent('secrets'),
-                'meta_title' => 'Top 10 Sales Secrets - The Strengths Toolbox',
-                'meta_description' => 'Discover the top 10 proven sales secrets used by successful salespeople to close more deals.',
-                'meta_keywords' => 'sales secrets, sales tips, sales strategies, sales success',
-                'is_published' => true,
-                'published_at' => Carbon::now(),
-            ],
-            [
-                'title' => 'In-Person Sales Training',
-                'slug' => 'sales-training/in-person-sales',
-                'excerpt' => 'Excel at face-to-face sales with proven techniques for in-person selling and client meetings.',
-                'content' => $this->getSalesTrainingContent('in-person'),
-                'meta_title' => 'In-Person Sales Training - The Strengths Toolbox',
-                'meta_description' => 'Master in-person sales techniques. Excel at face-to-face selling and client meetings.',
-                'meta_keywords' => 'in-person sales, face-to-face selling, sales meetings, client presentations',
+                'slug' => 'sales-courses/selling-on-the-phone',
+                'excerpt' => 'Master the soft skills and technical selling skills to improve your effectiveness when selling on the phone.',
+                'content' => $this->getSalesCoursesContent('selling-on-phone', $bookingUrl),
+                'meta_title' => 'Selling On The Phone - The Strengths Toolbox',
+                'meta_description' => 'Improve your phone sales results with soft skills and technical selling skills for telephone selling. Practical workshop for sales teams.',
+                'meta_keywords' => 'phone sales, telephone selling, sales calls, closing on the phone',
                 'is_published' => true,
                 'published_at' => Carbon::now(),
             ],
@@ -304,7 +286,7 @@ class ContentMigrationSeeder extends Seeder
                 'excerpt' => 'Enhance customer service skills with our comprehensive workshop focused on delivering exceptional customer experiences.',
                 'content' => $this->getWorkshopContent('customer-service'),
                 'meta_title' => 'Customer Service Workshop - The Strengths Toolbox',
-                'meta_description' => 'Enhance customer service skills with our comprehensive workshop. Deliver exceptional customer experiences.',
+                'meta_description' => 'Enhance customer service skills with our comprehensive workshop. Deliver exceptional customer experiences that build loyalty and drive growth.',
                 'meta_keywords' => 'customer service training, customer service workshop, customer experience',
                 'is_published' => true,
                 'published_at' => Carbon::now(),
@@ -315,7 +297,7 @@ class ContentMigrationSeeder extends Seeder
                 'excerpt' => 'Develop emotional intelligence skills to improve relationships, communication, and leadership effectiveness.',
                 'content' => $this->getWorkshopContent('emotional-intelligence'),
                 'meta_title' => 'Emotional Intelligence Workshop - The Strengths Toolbox',
-                'meta_description' => 'Develop emotional intelligence skills. Improve relationships, communication, and leadership.',
+                'meta_description' => 'Develop emotional intelligence skills to improve relationships, communication, and leadership effectiveness in the workplace.',
                 'meta_keywords' => 'emotional intelligence, EQ training, emotional intelligence workshop, self-awareness',
                 'is_published' => true,
                 'published_at' => Carbon::now(),
@@ -325,8 +307,8 @@ class ContentMigrationSeeder extends Seeder
                 'slug' => 'facilitation/goal-setting',
                 'excerpt' => 'Master goal setting and execution strategies to achieve your objectives and drive results.',
                 'content' => $this->getWorkshopContent('goal-setting'),
-                'meta_title' => 'Goal Setting Workshop - Getting Things Done - The Strengths Toolbox',
-                'meta_description' => 'Master goal setting and execution. Learn strategies to achieve your objectives and drive results.',
+                'meta_title' => 'Goal Setting Workshop | The Strengths Toolbox',
+                'meta_description' => 'Master goal setting and execution strategies to achieve your objectives and drive results. Learn proven frameworks for getting things done.',
                 'meta_keywords' => 'goal setting, productivity, execution, achievement, time management',
                 'is_published' => true,
                 'published_at' => Carbon::now(),
@@ -337,7 +319,7 @@ class ContentMigrationSeeder extends Seeder
                 'excerpt' => 'Build and lead high-performance teams that consistently deliver exceptional results.',
                 'content' => $this->getWorkshopContent('high-performance-teams'),
                 'meta_title' => 'High-Performance Teams Workshop - The Strengths Toolbox',
-                'meta_description' => 'Build and lead high-performance teams. Learn strategies to consistently deliver exceptional results.',
+                'meta_description' => 'Build and lead high-performance teams that consistently deliver exceptional results. Learn strategies for team excellence and sustained performance.',
                 'meta_keywords' => 'high-performance teams, team building, team effectiveness, team leadership',
                 'is_published' => true,
                 'published_at' => Carbon::now(),
@@ -348,7 +330,7 @@ class ContentMigrationSeeder extends Seeder
                 'excerpt' => 'Develop strong interpersonal skills to build better relationships and improve workplace communication.',
                 'content' => $this->getWorkshopContent('interpersonal-skills'),
                 'meta_title' => 'Interpersonal Skills Workshop - The Strengths Toolbox',
-                'meta_description' => 'Develop strong interpersonal skills. Build better relationships and improve workplace communication.',
+                'meta_description' => 'Develop strong interpersonal skills to build better relationships and improve workplace communication and collaboration.',
                 'meta_keywords' => 'interpersonal skills, communication skills, relationship building, workplace communication',
                 'is_published' => true,
                 'published_at' => Carbon::now(),
@@ -359,7 +341,7 @@ class ContentMigrationSeeder extends Seeder
                 'excerpt' => 'Learn practical financial management skills to take control of your personal finances and build wealth.',
                 'content' => $this->getWorkshopContent('personal-finances'),
                 'meta_title' => 'Personal Finance Management Workshop - The Strengths Toolbox',
-                'meta_description' => 'Learn practical financial management skills. Take control of your personal finances and build wealth.',
+                'meta_description' => 'Learn practical financial management skills to take control of your personal finances, build wealth, and plan for the future.',
                 'meta_keywords' => 'personal finance, financial management, money management, financial planning',
                 'is_published' => true,
                 'published_at' => Carbon::now(),
@@ -370,7 +352,7 @@ class ContentMigrationSeeder extends Seeder
                 'excerpt' => 'Master presentation skills to deliver compelling presentations that engage and persuade your audience.',
                 'content' => $this->getWorkshopContent('presentation-skills'),
                 'meta_title' => 'Presentation Skills Workshop - The Strengths Toolbox',
-                'meta_description' => 'Master presentation skills. Deliver compelling presentations that engage and persuade your audience.',
+                'meta_description' => 'Master presentation skills to deliver compelling presentations that engage and persuade your audience. Practical training for professionals.',
                 'meta_keywords' => 'presentation skills, public speaking, presentation training, communication skills',
                 'is_published' => true,
                 'published_at' => Carbon::now(),
@@ -381,7 +363,7 @@ class ContentMigrationSeeder extends Seeder
                 'excerpt' => 'Develop effective supervision skills to lead, motivate, and manage your team successfully.',
                 'content' => $this->getWorkshopContent('supervising-others'),
                 'meta_title' => 'Supervision Skills Workshop - The Strengths Toolbox',
-                'meta_description' => 'Develop effective supervision skills. Learn to lead, motivate, and manage your team successfully.',
+                'meta_description' => 'Develop effective supervision skills to lead, motivate, and manage your team successfully. Practical training for new and experienced supervisors.',
                 'meta_keywords' => 'supervision, management skills, team supervision, leadership training',
                 'is_published' => true,
                 'published_at' => Carbon::now(),
@@ -412,8 +394,8 @@ class ContentMigrationSeeder extends Seeder
                 'slug' => 'keynote-talks',
                 'excerpt' => 'Book Eberhard Niklaus for your next event. Engaging keynote talks on strengths-based development, team building, and business growth.',
                 'content' => $this->getKeynoteTalksContent(),
-                'meta_title' => 'Keynote Talks - Book Eberhard Niklaus - The Strengths Toolbox',
-                'meta_description' => 'Book Eberhard Niklaus for your next event. Engaging keynote talks on strengths-based development and business growth.',
+                'meta_title' => 'Keynote Talks | Eberhard Niklaus - The Strengths Toolbox',
+                'meta_description' => 'Book Eberhard Niklaus for your next event. Engaging keynote talks on strengths-based development, team building, and business growth.',
                 'meta_keywords' => 'keynote speaker, business speaker, strengths-based development, team building speaker',
                 'is_published' => true,
                 'published_at' => Carbon::now(),
@@ -424,7 +406,7 @@ class ContentMigrationSeeder extends Seeder
                 'excerpt' => 'Explore books and resources on strengths-based development, team building, and business growth.',
                 'content' => $this->getBooksContent(),
                 'meta_title' => 'Books and Resources - The Strengths Toolbox',
-                'meta_description' => 'Explore books and resources on strengths-based development, team building, and business growth.',
+                'meta_description' => 'Explore books and resources on strengths-based development, team building, and business growth. Free eBook and practical guides.',
                 'meta_keywords' => 'business books, leadership books, team building resources, strengths-based development',
                 'is_published' => true,
                 'published_at' => Carbon::now(),
@@ -447,6 +429,7 @@ class ContentMigrationSeeder extends Seeder
         // Homepage uses dedicated view, return minimal content for CMS version
         return <<<'HTML'
 <div class="prose prose-lg max-w-none">
+    <h1>Build Strong Teams, Unlock Strong Profits</h1>
     <p>Welcome to The Strengths Toolbox. Transform your business with strengths-based development. Build strong teams and unlock strong profits.</p>
     <p>Our proven approach helps teams achieve peak performance and drive sustainable growth through identifying and leveraging natural talents.</p>
 </div>
@@ -461,7 +444,7 @@ HTML;
         // Strengths Programme uses dedicated view, return minimal content for CMS version
         return <<<'HTML'
 <div class="prose prose-lg max-w-none">
-    <h2>Strengths Programme</h2>
+    <h1>Strengths Programme</h1>
     <p>Unlock growth through the Power of Strengths. Discover proven programs for individuals, managers, salespeople, and teams.</p>
     <p>Our comprehensive strengths-based development programs help you identify natural talents and leverage them for exceptional performance and sustainable business growth.</p>
 </div>
@@ -476,7 +459,7 @@ HTML;
         // About Us uses dedicated view with partials, return minimal content for CMS version
         return <<<'HTML'
 <div class="prose prose-lg max-w-none">
-    <h2>About Us</h2>
+    <h1>About Us</h1>
     <p>Eberhard Niklaus brings 30 years of experience in strengths-based development, team building, and business growth. With a passion for helping individuals and teams unlock their potential, Eberhard has worked with over 1560 clients across various industries to achieve exceptional results.</p>
     <p>At The Strengths Toolbox, we believe that everyone has unique natural talents that, when identified and developed, can lead to exceptional performance. Our approach focuses on identifying and understanding individual strengths, building on natural talents rather than fixing weaknesses, and creating strategies for effective application of strengths.</p>
     <p>Our mission is to help individuals and teams discover their strengths and learn how to leverage them for personal and professional success.</p>
@@ -491,7 +474,7 @@ HTML;
     {
         return <<<'HTML'
 <div class="prose prose-lg max-w-none">
-    <h2>The Power of Strengths</h2>
+    <h1>The Power of Strengths</h1>
     <p>Strengths-based development is a transformative approach that focuses on identifying and leveraging natural talents rather than trying to fix weaknesses. When individuals and teams understand their unique strengths, they can achieve exceptional performance and drive sustainable business growth.</p>
     
     <p>Research from Gallup shows that individuals who focus on their strengths are <strong>three times more likely to report an excellent quality of life</strong> and <strong>six times more likely to be engaged in their jobs</strong>. Teams that concentrate on strengths daily experience a <strong>12.5% increase in productivity</strong>. These compelling statistics demonstrate the real power of a strengths-based approach.</p>
@@ -588,7 +571,7 @@ HTML;
     {
         return <<<'HTML'
 <div class="prose prose-lg max-w-none">
-    <h2>Strengths-Based Development for Teams</h2>
+    <h1>Strengths-Based Development for Teams</h1>
     <p>Building a high-performing team requires more than just talented individuals. It requires understanding how each team member's unique strengths contribute to the collective success. Our strengths-based team development program helps teams achieve exceptional results through better collaboration, communication, and alignment.</p>
     
     <p>Teams that focus on strengths daily experience a 12.5% increase in productivity. When team members understand their own strengths and those of their colleagues, they can work together more effectively, reduce conflict, and achieve better outcomes.</p>
@@ -652,7 +635,7 @@ HTML;
     {
         return <<<'HTML'
 <div class="prose prose-lg max-w-none">
-    <h2>Strengths-Based Development for Managers and Leaders</h2>
+    <h1>Strengths-Based Development for Managers and Leaders</h1>
     <p>Effective leadership begins with understanding your own strengths and learning how to leverage them to inspire and guide others. Our strengths-based leadership development program helps managers and leaders build authentic leadership styles that drive team performance and organizational success.</p>
     
     <p>Managers who play to their own strengths establish a unique management style, creating an environment conducive to employee growth. When leaders understand and utilize their strengths, they can develop management approaches that feel natural and authentic, leading to better outcomes for their teams and organizations.</p>
@@ -724,7 +707,7 @@ HTML;
     {
         return <<<'HTML'
 <div class="prose prose-lg max-w-none">
-    <h2>Strengths-Based Development for Salespeople</h2>
+    <h1>Strengths-Based Development for Salespeople</h1>
     <p>Every salesperson has unique natural talents that can be leveraged for sales success. Our strengths-based sales development program helps salespeople identify their selling strengths and develop personalized approaches that lead to more closed deals and greater job satisfaction.</p>
     
     <p>Organizations that implement strengths-based development report significant improvements in sales performance. Teams receiving such development have achieved <strong>19% higher sales, 29% increased profits, and 72% lower turnover</strong> in high-turnover organizations. By focusing on their natural strengths, salespeople can enhance their effectiveness throughout the entire sales process.</p>
@@ -796,6 +779,7 @@ HTML;
     {
         return <<<'HTML'
 <div class="prose prose-lg max-w-none">
+    <h1>Individual Strengths Development</h1>
     <p>Everyone has a specific set of natural talents and abilities. When we intentionally apply our talents, they can become our greatest source of fulfillment — we become more confident, happy, energetic, and likely to achieve our goals.</p>
     
     <p>Because our talents come so naturally to us, and because we often take them for granted, many times we are not fully aware of our strengths and what we can contribute.</p>
@@ -872,116 +856,192 @@ HTML;
     }
 
     /**
-     * Get content for sales training pages
+     * Get content for Sales Courses pages (from TSA sales-courses; brand replaced)
      */
-    protected function getSalesTrainingContent(string $type): string
+    protected function getSalesCoursesContent(string $type, string $bookingUrl): string
     {
+        $img = '/storage/sales-courses';
+        if ($type === 'parent') {
+            return '<div class="prose prose-lg max-w-none">
+<figure class="my-6"><img src="'.$img.'/stacking-wooden-blocks.jpg" alt="Sales courses – strong teams, strong profits" class="rounded-lg w-full max-w-2xl mx-auto" /></figure>
+<h1>Strong Teams. Strong Profits.</h1>
+<p>At The Strengths Toolbox, we\'ve designed 4 powerful sales courses to transform the way you and your team sell. Whether you\'re just starting out or ready to master advanced strategies, these courses will help you sell with confidence, close more deals, and grow your profits.</p>
+<p><a href="'.$bookingUrl.'" class="btn btn-primary">Book your seat today</a></p>
+<h3>Sales Training Details</h3>
+<ul>
+<li><strong>Pricing:</strong> R1,790.00 (20% discount on groups of 3+)</li>
+<li><strong>Format &amp; Duration:</strong> Full-day intensive (08:30 – 16:00)</li>
+<li><strong>Interactive Experience:</strong> Includes role-playing, real-world case studies, and personalized feedback.</li>
+</ul>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+<a href="/sales-courses/sales-fundamentals-and-advanced-techniques" class="block p-4 border rounded-lg hover:bg-gray-50"><h3 class="font-semibold">Sales Fundamentals &amp; Advanced Techniques</h3><p class="text-sm text-gray-600">Essential and advanced sales skills in one course</p></a>
+<a href="/sales-courses/mastering-relationship-selling" class="block p-4 border rounded-lg hover:bg-gray-50"><h3 class="font-semibold">Mastering Relationship Selling Workshop</h3><p class="text-sm text-gray-600">Build lasting customer relationships</p></a>
+<a href="/sales-courses/mindset-of-a-super-salesperson" class="block p-4 border rounded-lg hover:bg-gray-50"><h3 class="font-semibold">The Mindset of a Super Salesperson</h3><p class="text-sm text-gray-600">Emotional intelligence and self-motivation</p></a>
+<a href="/sales-courses/selling-on-the-phone" class="block p-4 border rounded-lg hover:bg-gray-50"><h3 class="font-semibold">Selling On The Phone</h3><p class="text-sm text-gray-600">Master phone sales techniques</p></a>
+</div>
+</div>';
+        }
+
+        $bookingLink = '<p><a href="'.$bookingUrl.'" class="btn btn-primary">Book your seat today</a></p>';
+        $trainingOptions = '<h4>Training Options</h4><ul><li>Virtual sessions (coming soon).</li><li>Custom team training options available.</li><li>One-on-one coaching sessions.</li><li>In-person group workshops (max 16 participants).</li></ul>';
+
         $content = [
-            'strengths-based' => <<<'HTML'
-<div class="prose prose-lg max-w-none">
-    <h2>Strengths-Based Sales Training</h2>
-    <p>Transform your sales team with training that leverages each salesperson's natural selling strengths. Our strengths-based approach helps sales teams achieve better results by working with their natural talents rather than against them.</p>
-    <p>Organizations implementing strengths-based sales training report up to 19% increase in sales and 29% increased profits. By focusing on each salesperson's natural strengths, teams can achieve exceptional results.</p>
-    <h3>Program Overview</h3>
-    <p>This comprehensive program combines CliftonStrengths assessment with proven sales methodologies to create personalized development paths for each salesperson. Each participant discovers their unique selling strengths and learns how to leverage them throughout the sales process.</p>
-    <h3>Key Components</h3>
-    <ul>
-        <li>Individual CliftonStrengths assessment for each salesperson to identify top selling talents</li>
-        <li>Personalized sales development plans based on natural strengths</li>
-        <li>Strengths-based sales techniques tailored to each person's selling style</li>
-        <li>Team collaboration strategies to leverage complementary strengths</li>
-        <li>Ongoing coaching and support for continued development</li>
-        <li>Workshops on applying strengths at each stage of the sales process</li>
-    </ul>
-    <h3>Expected Results</h3>
-    <ul>
-        <li>Increased sales conversion rates and closed deals</li>
-        <li>Higher average deal values</li>
-        <li>Improved customer relationships</li>
-        <li>Greater sales team engagement and retention</li>
-        <li>Reduced sales cycle times</li>
-    </ul>
-</div>
-HTML,
-            'relationship' => <<<'HTML'
-<div class="prose prose-lg max-w-none">
-    <h2>Relationship Selling Training</h2>
-    <p>Master the art of relationship selling to build lasting client relationships and increase sales success. This program focuses on building trust, understanding client needs, and creating long-term partnerships.</p>
-    <h3>Training Focus</h3>
-    <ul>
-        <li>Building trust and rapport with clients</li>
-        <li>Understanding client needs and challenges</li>
-        <li>Creating value-based relationships</li>
-        <li>Long-term account management</li>
-        <li>Referral generation strategies</li>
-    </ul>
-</div>
-HTML,
-            'phone' => <<<'HTML'
-<div class="prose prose-lg max-w-none">
-    <h2>Selling On The Phone</h2>
-    <p>Master phone sales techniques to close more deals and build stronger client connections, even without face-to-face meetings. This program teaches proven strategies for effective telephone selling.</p>
-    <h3>Key Skills Covered</h3>
-    <ul>
-        <li>Building rapport over the phone</li>
-        <li>Effective phone communication techniques</li>
-        <li>Handling objections on the phone</li>
-        <li>Closing deals via telephone</li>
-        <li>Follow-up strategies</li>
-    </ul>
-</div>
-HTML,
-            'fundamentals' => <<<'HTML'
-<div class="prose prose-lg max-w-none">
-    <h2>Sales Fundamentals Workshop</h2>
-    <p>Master the fundamentals of sales with our comprehensive workshop covering essential selling skills. Perfect for new salespeople or those looking to refresh their core sales knowledge.</p>
-    <h3>Workshop Topics</h3>
-    <ul>
-        <li>The sales process and pipeline</li>
-        <li>Prospecting and lead generation</li>
-        <li>Qualifying prospects</li>
-        <li>Needs assessment</li>
-        <li>Presentation skills</li>
-        <li>Handling objections</li>
-        <li>Closing techniques</li>
-        <li>Follow-up and account management</li>
-    </ul>
-</div>
-HTML,
-            'secrets' => <<<'HTML'
-<div class="prose prose-lg max-w-none">
-    <h2>Top 10 Sales Secrets</h2>
-    <p>Discover the top 10 proven sales secrets that successful salespeople use to close more deals and build lasting client relationships.</p>
-    <h3>The Secrets</h3>
-    <ol>
-        <li>Listen more than you talk</li>
-        <li>Focus on solving problems, not selling products</li>
-        <li>Build genuine relationships</li>
-        <li>Understand your client's business</li>
-        <li>Follow up consistently</li>
-        <li>Ask the right questions</li>
-        <li>Handle objections with confidence</li>
-        <li>Create urgency when appropriate</li>
-        <li>Always add value</li>
-        <li>Never stop learning</li>
-    </ol>
-</div>
-HTML,
-            'in-person' => <<<'HTML'
-<div class="prose prose-lg max-w-none">
-    <h2>In-Person Sales Training</h2>
-    <p>Excel at face-to-face sales with proven techniques for in-person selling and client meetings. This program covers everything from initial meetings to closing deals in person.</p>
-    <h3>Training Components</h3>
-    <ul>
-        <li>Making great first impressions</li>
-        <li>Reading body language and non-verbal cues</li>
-        <li>Effective presentation skills</li>
-        <li>Building rapport in person</li>
-        <li>Handling in-person objections</li>
-        <li>Closing techniques for face-to-face meetings</li>
-    </ul>
-</div>
-HTML,
+            'fundamentals-advanced' => '<div class="prose prose-lg max-w-none">
+<h1>Sales Fundamentals &amp; Advanced Techniques</h1>
+<p>This combined course merges <strong>Essential Sales Fundamentals</strong> and <strong>Advanced Sales Strategies and Techniques</strong> into one comprehensive programme.</p>
+<figure class="my-6"><img src="'.$img.'/stacking-wooden-blocks.jpg" alt="Sales fundamentals and business growth" class="rounded-lg w-full max-w-2xl mx-auto" /></figure>
+<h3>What You\'ll Master</h3>
+<ul>
+<li><strong>Essential Soft Skills:</strong> Listening skills, questioning skills, emotional intelligence</li>
+<li><strong>Essential Sales Skills:</strong> Prospecting, presenting, uncovering prospects\' needs, satisfying prospects\' needs (features and benefits), handling objections, closing the sale</li>
+<li><strong>Goal Setting and Self-Motivation:</strong> Create inspiring goals to stay focused</li>
+<li><strong>Advanced Sales Skills:</strong> Prospecting and lead generation, negotiation skills, presentation skills, handling objections, closing techniques</li>
+</ul>
+<h3>Why you need this workshop</h3>
+<ul>
+<li><strong>Goal Setting:</strong> Learn how to set effective sales goals that will inspire you to success.</li>
+<li><strong>Develop Sales Excellence:</strong> Learn the traits and habits of top-performing salespeople.</li>
+<li><strong>Understand the Sales Journey:</strong> Know all the essential steps in the sales journey and the importance of "going all the way."</li>
+<li><strong>Accelerate Sales Success:</strong> Learn more effective sales techniques and strategies.</li>
+<li><strong>Master Sales Skills:</strong> Take your sales skills from "good to great".</li>
+</ul>
+<h3>Workshop Curriculum</h3>
+<ul>
+<li>After Sales Service</li>
+<li>Close the Sale (Identify "buying signals"; closing techniques)</li>
+<li>Handling Objections</li>
+<li>Satisfy the Need (Features and Benefits)</li>
+<li>Uncover the Need (Questions are the answer)</li>
+<li>Prospecting Techniques</li>
+<li>Develop Effective Listening Skills</li>
+<li>How to have a Positive Attitude</li>
+<li>Self-Motivation &amp; Goal Setting: Staying Driven and Focused</li>
+<li>Advanced Strategies for: Overcoming Objections; Closing the Sale</li>
+<li>Sales Presentations Skills</li>
+<li>Negotiations Skills</li>
+<li>Prospecting and Lead Generation</li>
+</ul>
+<figure class="my-6"><img src="'.$img.'/person-plays-chess.jpg" alt="Advanced sales strategies and planning" class="rounded-lg w-full max-w-2xl mx-auto" /></figure>
+'.$bookingLink.'
+<h4>Who Should Attend?</h4>
+<ul>
+<li>Sales teams.</li>
+<li>Start-up business owners who will also play a role in selling.</li>
+<li>Salespersons wanting to brush up on their sales skills.</li>
+<li>Salespersons starting off in a sales career.</li>
+<li>Sales teams who want to integrate advanced sales strategies and techniques into their team dynamics.</li>
+<li>Small business owners who also play a sales role in their organisations.</li>
+<li>Sales managers who want to help their sales teams.</li>
+<li>Salespersons who want to elevate their basic sales skills and become expert salespersons.</li>
+</ul>
+'.$trainingOptions.'
+</div>',
+            'relationship-selling' => '<div class="prose prose-lg max-w-none">
+<h1>Mastering Relationship Selling Workshop</h1>
+<figure class="my-6"><img src="'.$img.'/people-working-office.jpg" alt="People working in an elegant office space" class="rounded-lg w-full max-w-2xl mx-auto" /></figure>
+<h3>What You\'ll Master</h3>
+<ul>
+<li><strong>Long-term Value Creation:</strong> Develop lasting customer relationships that generate repeat business and referrals.</li>
+<li><strong>Trust Building:</strong> Learn how to earn and maintain customer trust.</li>
+<li><strong>Authentic Connection:</strong> Build real relationships that naturally lead to sales.</li>
+</ul>
+<h3>Why you need this workshop</h3>
+<ul>
+<li><strong>Lifetime Value:</strong> Create loyal customers who advocate for your business long after the sale.</li>
+<li><strong>Competitive Advantage:</strong> Products can be replicated, but genuine relationships set you apart.</li>
+<li><strong>Changed Buying Behaviour:</strong> Today\'s informed customers choose trust over mere product quality.</li>
+<li><strong>The 5–7 Contact Reality:</strong> Modern buyers need multiple meaningful interactions before committing. Building strong relationships is essential.</li>
+</ul>
+<h3>Workshop Curriculum</h3>
+<ul>
+<li>Long-term Value: Learn strategies to create ongoing, profitable customer relationships</li>
+<li>Customer Connection Mastery: Master the art of engaging with customers on a deeper level</li>
+<li>The Trust Formula: Discover proven methods to build lasting trust with customers</li>
+<li>Building Your Foundation: Set the groundwork for trust and authenticity</li>
+<li>The Evolution of Sales: Understand how sales has shifted to relationship-driven strategies</li>
+</ul>
+'.$bookingLink.'
+<h4>Who Should Attend?</h4>
+<ul>
+<li>Sales teams transitioning to consultative, relationship-focused selling.</li>
+<li>Account managers aiming to strengthen client relationships.</li>
+<li>Business owners wanting to boost customer loyalty.</li>
+<li>Sales professionals looking to modernize their approach.</li>
+</ul>
+<h4>Training Options</h4>
+<ul><li>Virtual sessions (coming soon).</li><li>Custom team training options available.</li><li>One-on-one coaching sessions.</li><li>In-person group workshops (max 12 participants).</li></ul>
+</div>',
+            'mindset-super-salesperson' => '<div class="prose prose-lg max-w-none">
+<h1>The Mindset of a Super Salesperson</h1>
+<figure class="my-6"><img src="'.$img.'/brain-mindset-concept.jpg" alt="Mindset and psychological steps to success" class="rounded-lg w-full max-w-2xl mx-auto" /></figure>
+<h3>What You\'ll Master</h3>
+<ul>
+<li><strong>Emotional Intelligence:</strong> Create self-awareness and self-motivation.</li>
+<li><strong>Positive psychological traits:</strong> Nip depression, anxiety and distress in the bud.</li>
+<li><strong>Self-Motivation:</strong> Emotions that produce positive action.</li>
+</ul>
+<h3>Why you need this workshop</h3>
+<ul>
+<li>Get practical tools to help you turn setbacks into stepping stones, deal with negative thoughts and create a positive mindset.</li>
+<li>6 Ways to Invest in your potential</li>
+<li>Learn how to be in control</li>
+<li>Learn three psychological steps to Success</li>
+<li>Master Self-Motivation</li>
+</ul>
+<h3>Workshop Curriculum</h3>
+<ul>
+<li>The Role of Emotional Intelligence in Sales Success</li>
+<li>Invest in Yourself: Six Steps to Success</li>
+<li>The 3 Psychological Steps to Sales Success</li>
+<li>Using motivation and emotions to connect with your customers</li>
+</ul>
+'.$bookingLink.'
+<h4>Who Should Attend?</h4>
+<ul>
+<li>Sales teams who want to support each other by demonstrating Emotional Intelligence</li>
+<li>Small business owners who also play a sales role in their organisations</li>
+<li>Sales managers who want to help their sales teams</li>
+<li>Salespersons who want to use their thoughts and emotions to accelerate success</li>
+</ul>
+'.$trainingOptions.'
+</div>',
+            'selling-on-phone' => '<div class="prose prose-lg max-w-none">
+<h1>Selling On The Phone</h1>
+<figure class="my-6"><img src="'.$img.'/selling-on-phone.jpg" alt="Selling on the phone and customer engagement" class="rounded-lg w-full max-w-2xl mx-auto" /></figure>
+<p>We cannot escape the fact that the phone is very often still used as a convenient instrument in selling our products and services, as well as selling appointments. The difference between an average sales person and an excellent one will make a significant difference to your sales results.</p>
+<p>Consider: if your closing rate (incoming hot leads) improved from 60% to 80%, it translates into more than 30% improvement in your closing rate! Or if your closing rate increased from 10% to 15% (outgoing calls) it means that your closing rate has improved by 50%, and this in turn results in a huge difference to the total sales you bring in.</p>
+<p>For example, if you phoned 250 prospects per week (50 per day; 10 per hour for 5 hours per day), and closed 10% (2 sales per 20 calls) at an average of R500, your sales will amount to R12,500. If you improved your closing rate from 2 to 3 sales per 20 calls (which is 50% growth), your sales will soar to R18,750, just by closing one more sale for every 20 calls.</p>
+<h3>Why you need this workshop</h3>
+<ul>
+<li>Learn how to maintain a positive attitude when selling on the phone.</li>
+<li>"Selling on the Phone" will teach you both the soft skills as well as specific technical selling skills to improve your effectiveness with selling on the phone.</li>
+</ul>
+<h3>Workshop Curriculum</h3>
+<ul>
+<li>Measuring your Strike Rate (Keeping Records)</li>
+<li>Closing the Sale</li>
+<li>Buying Signals</li>
+<li>Handling a Stall</li>
+<li>Overcoming Objections</li>
+<li>What do Customers Buy?</li>
+<li>Talk Features, not Benefits</li>
+<li>Satisfy the Need</li>
+<li>Uncover the Need</li>
+<li>The Effective use of Questioning Techniques</li>
+<li>The Importance of First Impressions</li>
+<li>The Art of Effective Listening Skills</li>
+<li>3 Important Pre-requisites before Picking up the Phone</li>
+</ul>
+'.$bookingLink.'
+<h4>Who Should Attend?</h4>
+<ul>
+<li>Sales teams.</li>
+<li>Start-up business owners who will also play a role in selling.</li>
+<li>Salespersons wanting to brush up on their sales skills.</li>
+<li>Salespersons starting off in a sales career.</li>
+</ul>
+'.$trainingOptions.'
+</div>',
         ];
 
         return $content[$type] ?? '<p>Content coming soon...</p>';
@@ -995,7 +1055,7 @@ HTML,
         $content = [
             'customer-service' => <<<'HTML'
 <div class="prose prose-lg max-w-none">
-    <h2>Customer Service Workshop</h2>
+    <h1>Customer Service Workshop</h1>
     <p>Enhance customer service skills with our comprehensive workshop focused on delivering exceptional customer experiences that build loyalty and drive business growth.</p>
     <h3>Workshop Topics</h3>
     <ul>
@@ -1009,7 +1069,7 @@ HTML,
 HTML,
             'emotional-intelligence' => <<<'HTML'
 <div class="prose prose-lg max-w-none">
-    <h2>Emotional Intelligence Workshop</h2>
+    <h1>Emotional Intelligence Workshop</h1>
     <p>Develop emotional intelligence skills to improve relationships, communication, and leadership effectiveness. Learn to understand and manage emotions for better personal and professional outcomes.</p>
     <h3>Key Areas Covered</h3>
     <ul>
@@ -1023,7 +1083,7 @@ HTML,
 HTML,
             'goal-setting' => <<<'HTML'
 <div class="prose prose-lg max-w-none">
-    <h2>Goal Setting and Getting Things Done</h2>
+    <h1>Goal Setting and Getting Things Done</h1>
     <p>Master goal setting and execution strategies to achieve your objectives and drive results. Learn proven frameworks for setting meaningful goals and following through to completion.</p>
     <h3>Workshop Focus</h3>
     <ul>
@@ -1037,7 +1097,7 @@ HTML,
 HTML,
             'high-performance-teams' => <<<'HTML'
 <div class="prose prose-lg max-w-none">
-    <h2>High-Performance Teams Workshop</h2>
+    <h1>High-Performance Teams Workshop</h1>
     <p>Build and lead high-performance teams that consistently deliver exceptional results. Learn the principles and practices that drive team excellence.</p>
     <h3>Key Topics</h3>
     <ul>
@@ -1051,7 +1111,7 @@ HTML,
 HTML,
             'interpersonal-skills' => <<<'HTML'
 <div class="prose prose-lg max-w-none">
-    <h2>Interpersonal Skills Workshop</h2>
+    <h1>Interpersonal Skills Workshop</h1>
     <p>Develop strong interpersonal skills to build better relationships and improve workplace communication. Enhance your ability to work effectively with others.</p>
     <h3>Skills Developed</h3>
     <ul>
@@ -1065,7 +1125,7 @@ HTML,
 HTML,
             'personal-finances' => <<<'HTML'
 <div class="prose prose-lg max-w-none">
-    <h2>Managing Personal Finances Workshop</h2>
+    <h1>Managing Personal Finances Workshop</h1>
     <p>Learn practical financial management skills to take control of your personal finances and build wealth. This workshop provides actionable strategies for financial success.</p>
     <h3>Topics Covered</h3>
     <ul>
@@ -1079,7 +1139,7 @@ HTML,
 HTML,
             'presentation-skills' => <<<'HTML'
 <div class="prose prose-lg max-w-none">
-    <h2>Presentation Skills Workshop</h2>
+    <h1>Presentation Skills Workshop</h1>
     <p>Master presentation skills to deliver compelling presentations that engage and persuade your audience. Learn to communicate your message effectively and confidently.</p>
     <h3>Workshop Components</h3>
     <ul>
@@ -1093,7 +1153,7 @@ HTML,
 HTML,
             'supervising-others' => <<<'HTML'
 <div class="prose prose-lg max-w-none">
-    <h2>Supervising Others Workshop</h2>
+    <h1>Supervising Others Workshop</h1>
     <p>Develop effective supervision skills to lead, motivate, and manage your team successfully. Learn the fundamentals of effective supervision and team management.</p>
     <h3>Key Areas</h3>
     <ul>
@@ -1117,7 +1177,7 @@ HTML,
     {
         return <<<'HTML'
 <div class="prose prose-lg max-w-none">
-    <h2>Keynote Talks</h2>
+    <h1>Keynote Talks</h1>
     <p>Eberhard Niklaus brings decades of experience and real-world insights to your events. His keynote talks combine practical wisdom with engaging storytelling to inspire audiences and drive action.</p>
     
     <h3>Popular Keynote Topics</h3>
@@ -1145,7 +1205,7 @@ HTML;
     {
         return <<<'HTML'
 <div class="prose prose-lg max-w-none">
-    <h2>Books and Resources</h2>
+    <h1>Books and Resources</h1>
     <p>Expand your knowledge with our recommended reading and resources on strengths-based development, team building, and business growth.</p>
     
     <h3>Free Resources</h3>

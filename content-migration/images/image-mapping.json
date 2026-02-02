@@ -1,5 +1,5 @@
 {
-  "note": "This file maps original image paths to new filenames and metadata. Update this after downloading images from source websites.",
+  "note": "This file maps original image paths to new filenames and metadata. TSA blog entries include source_url for download; run php artisan blog:download-tsa-images to copy and assign. Update after downloading.",
   "images": {
     "tsa/about/eberhard-niklaus.jpg": {
       "new_filename": "eberhard-niklaus.webp",
@@ -34,6 +34,7 @@
       "section": "programs"
     },
     "strengthstoolbox/blog/blog-how-your-natural-talents-are-the-key-to-unlocking-your-potential.jpg": {
+      "source_url": "https://www.tsabusinessschool.co.za/wp-content/uploads/2025/07/architectural-designers-team-pointing-pen-skyscraper-discussing-architecture-design-modern-office-architects-colleagues-brainstorming-ideeas-collaborating-white-foam-model-1-scaled-1-400x250.jpg",
       "new_filename": "blog-natural-talents-unlock-potential.webp",
       "alt_text": "Illustration showing natural talents unlocking potential",
       "page": "blog",
@@ -41,6 +42,7 @@
       "blog_post_slug": "how-your-natural-talents-are-the-key-to-unlocking-your-potential"
     },
     "strengthstoolbox/blog/blog-why-goals-are-essential-for-salespeople.jpg": {
+      "source_url": "https://www.tsabusinessschool.co.za/wp-content/uploads/2025/06/BS--400x250.jpg",
       "new_filename": "blog-goals-essential-salespeople.webp",
       "alt_text": "Sales goals and performance illustration",
       "page": "blog",
@@ -48,6 +50,7 @@
       "blog_post_slug": "why-goals-are-essential-for-salespeople"
     },
     "strengthstoolbox/blog/blog-the-benefits-of-strengths-based-selling.jpg": {
+      "source_url": "https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Your-paragraph-text-400x250.jpg",
       "new_filename": "blog-strengths-based-selling.webp",
       "alt_text": "Strengths-based selling approach illustration",
       "page": "blog",
@@ -55,6 +58,7 @@
       "blog_post_slug": "the-benefits-of-strengths-based-selling"
     },
     "strengthstoolbox/blog/blog-the-idea-that-anyone-can-sell-is-nonsense.jpg": {
+      "source_url": "https://www.tsabusinessschool.co.za/wp-content/uploads/2025/04/pexels-photo-3184291-400x250.webp",
       "new_filename": "blog-anyone-can-sell-nonsense.webp",
       "alt_text": "Sales talent and performance illustration",
       "page": "blog",
@@ -93,6 +97,60 @@
       "page": "books",
       "section": "ebook",
       "description": "Free Sales Book eBook cover image"
+    },
+    "tsa/blog/aligning-tasks-to-talent.jpg": {
+      "source_url": "https://www.tsabusinessschool.co.za/wp-content/uploads/2025/07/architectural-designers-team-pointing-pen-skyscraper-discussing-architecture-design-modern-office-architects-colleagues-brainstorming-ideeas-collaborating-white-foam-model-1-scaled-1-400x250.jpg",
+      "new_filename": "blog-aligning-tasks-to-talent.jpg",
+      "alt_text": "Aligning tasks to talent - strengths-based approach",
+      "blog_post_slug": "aligning-tasks-to-talent-using-a-strengths-based-approach"
+    },
+    "tsa/blog/conflict-resolution.jpg": {
+      "source_url": "https://www.tsabusinessschool.co.za/wp-content/uploads/2025/06/BS--400x250.jpg",
+      "new_filename": "blog-conflict-resolution.jpg",
+      "alt_text": "The Art of Conflict Resolution - Building Stronger Teams",
+      "blog_post_slug": "the-art-of-conflict-resolution-building-stronger-teams-together"
+    },
+    "tsa/blog/difficult-conversations.jpg": {
+      "source_url": "https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Your-paragraph-text-400x250.jpg",
+      "new_filename": "blog-difficult-conversations.jpg",
+      "alt_text": "Difficult Conversations and Feedback",
+      "blog_post_slug": "difficult-conversations-and-feedback-how-to-handle-tough-talks"
+    },
+    "tsa/blog/from-weakness-to-strengths.jpg": {
+      "source_url": "https://www.tsabusinessschool.co.za/wp-content/uploads/2025/03/getting-past-the-gatekeeper-sales-strategies-400x250.webp",
+      "new_filename": "blog-from-weakness-to-strengths.webp",
+      "alt_text": "From Weakness Fixing to Strengths Building",
+      "blog_post_slug": "from-weakness-fixing-to-strengths-building-the-managers-guide"
+    },
+    "tsa/blog/strengths-based-leadership.jpg": {
+      "source_url": "https://www.tsabusinessschool.co.za/wp-content/uploads/2025/04/pexels-photo-3184291-400x250.webp",
+      "new_filename": "blog-strengths-based-leadership.webp",
+      "alt_text": "Strengths-Based Leadership",
+      "blog_post_slug": "strengths-based-leadership-leveraging-individual-strengths"
+    },
+    "tsa/blog/importance-of-mentorship.jpg": {
+      "source_url": "https://www.tsabusinessschool.co.za/wp-content/uploads/2025/06/BS--400x250.jpg",
+      "new_filename": "blog-importance-of-mentorship.jpg",
+      "alt_text": "The Importance of Mentorship",
+      "blog_post_slug": "the-importance-of-mentorship-stories-and-tips-for-leaders"
+    },
+    "tsa/blog/psychological-safety.jpg": {
+      "source_url": "https://www.tsabusinessschool.co.za/wp-content/uploads/2025/07/stress-headache-multitask-woman-manager-with-anxiety-burnout-focus-problem-working-office-laptop-phone-call-documents-chaos-corporate-secretary-administration-people-hands-2-400x250.jpg",
+      "new_filename": "blog-psychological-safety.jpg",
+      "alt_text": "Psychological Safety at Work",
+      "blog_post_slug": "psychological-safety-at-work"
+    },
+    "tsa/blog/overcoming-imposter-syndrome.jpg": {
+      "source_url": "https://www.tsabusinessschool.co.za/wp-content/uploads/2025/07/businessman-using-digital-tablet-1-scaled-1-400x250.jpg",
+      "new_filename": "blog-overcoming-imposter-syndrome.jpg",
+      "alt_text": "Overcoming Imposter Syndrome",
+      "blog_post_slug": "overcoming-imposter-syndrome-advice-for-managers"
+    },
+    "tsa/blog/management-styles.jpg": {
+      "source_url": "https://www.tsabusinessschool.co.za/wp-content/uploads/2025/08/482970-400x250.jpg",
+      "new_filename": "blog-management-styles.jpg",
+      "alt_text": "Navigating Different Management Styles",
+      "blog_post_slug": "navigating-different-management-styles-comparing-authoritarian-democratic-coaching"
     }
   }
 }

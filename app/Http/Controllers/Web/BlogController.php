@@ -36,8 +36,8 @@ class BlogController extends Controller
 
             $seo = $this->seoService->getDefaultMeta();
             $seo['title'] = 'Blog - The Strengths Toolbox';
-            $seo['description'] = 'Read articles about strengths-based development, team building, sales training, and leadership insights from The Strengths Toolbox.';
-            $seo['keywords'] = 'blog, articles, strengths development, team building, sales training';
+            $seo['description'] = 'Read articles about strengths-based development, team building, sales courses, and leadership insights from The Strengths Toolbox.';
+            $seo['keywords'] = 'blog, articles, strengths development, team building, sales courses';
             $seo['canonical'] = route('blog.index');
             $seo['og_url'] = route('blog.index');
 

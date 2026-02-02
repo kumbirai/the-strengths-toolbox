@@ -24,9 +24,9 @@ class NavigationHelper
         })->toArray();
     }
 
-    public static function getSalesTrainingItems(): array
+    public static function getSalesCoursesItems(): array
     {
-        $pages = Page::where('slug', 'like', 'sales-training/%')
+        $pages = Page::where('slug', 'like', 'sales-courses/%')
             ->where('is_published', true)
             ->orderBy('title')
             ->get();

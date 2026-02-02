@@ -1,4 +1,4 @@
-@props(['page', 'showBreadcrumbs' => true])
+@props(['page', 'showBreadcrumbs' => true, 'pageImage' => null])
 
 {{-- Hero Section --}}
 <section class="relative section-gradient-primary overflow-hidden">
@@ -29,6 +29,17 @@
                     {{ $page->excerpt }}
                 </p>
             @endif
+
+            @if($pageImage)
+                <div class="mt-8 max-w-2xl mx-auto">
+                    <img
+                        src="{{ $pageImage->url }}"
+                        alt="{{ $pageImage->alt_text ?? $page->title }}"
+                        class="w-full rounded-xl shadow-lg object-cover aspect-video"
+                        loading="eager"
+                    >
+                </div>
+            @endif
         </div>
     </div>
 </section>
@@ -37,8 +48,13 @@
 <section class="section-padding section-light">
     <div class="container-custom">
         <article class="max-w-4xl mx-auto">
-            <div class="prose-content">
-                {!! $page->content !!}
+            <div class="prose-content" x-data="{}" x-init="$el.querySelectorAll('img').forEach(img => { img.onerror = function() { this.style.display = 'none'; } })">
+                @php
+                    $content = $page->content;
+                    $bookingUrl = e(route('booking'));
+                    $content = str_replace(['href="/booking"', 'href=\'/booking\''], 'href="'.$bookingUrl.'"', $content);
+                @endphp
+                {!! $content !!}
             </div>
 
             @if(isset($page->cta_text) && isset($page->cta_link) && $page->cta_text && $page->cta_link)

@@ -12,7 +12,7 @@ class CategorySeeder extends Seeder
         $categories = [
             ['name' => 'Team Development', 'slug' => 'team-development'],
             ['name' => 'Leadership', 'slug' => 'leadership'],
-            ['name' => 'Sales Training', 'slug' => 'sales-training'],
+            ['name' => 'Sales Courses', 'slug' => 'sales-courses'],
             ['name' => 'Case Studies', 'slug' => 'case-studies'],
             ['name' => 'Business Coaching', 'slug' => 'business-coaching'],
             ['name' => 'Coaching', 'slug' => 'coaching'],

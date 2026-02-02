@@ -19,9 +19,6 @@ class ExistingContentPagesSeeder extends Seeder
         // Strengths-Based Development Pages
         $this->createStrengthsBasedDevelopmentPages();
 
-        // Sales Training Pages
-        $this->createSalesTrainingPages();
-
         // Facilitation/Workshop Pages
         $this->createFacilitationPages();
     }
@@ -70,73 +67,6 @@ class ExistingContentPagesSeeder extends Seeder
                 'excerpt' => 'Discover your unique strengths and unlock your full potential.',
                 'meta_title' => 'Individual Strengths Development - The Strengths Toolbox',
                 'meta_description' => 'Personal development programs to help individuals discover and leverage their natural strengths.',
-                'content' => '<p>Content will be migrated in Phase 5.</p>',
-            ],
-        ];
-
-        foreach ($pages as $pageData) {
-            Page::updateOrCreate(
-                ['slug' => $pageData['slug']],
-                array_merge($pageData, [
-                    'is_published' => true,
-                    'published_at' => now(),
-                ])
-            );
-        }
-    }
-
-    /**
-     * Create Sales Training pages
-     */
-    private function createSalesTrainingPages(): void
-    {
-        $pages = [
-            [
-                'title' => 'Strengths-Based Training',
-                'slug' => 'sales-training/strengths-based-training',
-                'excerpt' => 'Sales training programs that leverage your natural strengths for better results.',
-                'meta_title' => 'Strengths-Based Sales Training - The Strengths Toolbox',
-                'meta_description' => 'Sales training programs designed around your natural strengths and talents.',
-                'content' => '<p>Content will be migrated in Phase 5.</p>',
-            ],
-            [
-                'title' => 'Relationship Selling',
-                'slug' => 'sales-training/relationship-selling',
-                'excerpt' => 'Build lasting customer relationships through effective relationship selling strategies.',
-                'meta_title' => 'Relationship Selling Training - The Strengths Toolbox',
-                'meta_description' => 'Learn relationship selling techniques to build stronger customer connections.',
-                'content' => '<p>Content will be migrated in Phase 5.</p>',
-            ],
-            [
-                'title' => 'Selling On The Phone',
-                'slug' => 'sales-training/selling-on-the-phone',
-                'excerpt' => 'Master the art of phone sales with proven techniques and strategies.',
-                'meta_title' => 'Phone Sales Training - The Strengths Toolbox',
-                'meta_description' => 'Effective phone sales training to improve your telephone selling skills.',
-                'content' => '<p>Content will be migrated in Phase 5.</p>',
-            ],
-            [
-                'title' => 'Sales Fundamentals Workshop',
-                'slug' => 'sales-training/sales-fundamentals-workshop',
-                'excerpt' => 'Master the fundamentals of sales with our comprehensive workshop.',
-                'meta_title' => 'Sales Fundamentals Workshop - The Strengths Toolbox',
-                'meta_description' => 'Comprehensive sales fundamentals workshop covering essential sales skills and techniques.',
-                'content' => '<p>Content will be migrated in Phase 5.</p>',
-            ],
-            [
-                'title' => 'Top 10 Sales Secrets',
-                'slug' => 'sales-training/top-10-sales-secrets',
-                'excerpt' => 'Discover the top 10 secrets of successful sales professionals.',
-                'meta_title' => 'Top 10 Sales Secrets - The Strengths Toolbox',
-                'meta_description' => 'Learn the top 10 proven secrets that successful sales professionals use to close more deals.',
-                'content' => '<p>Content will be migrated in Phase 5.</p>',
-            ],
-            [
-                'title' => 'In-Person Sales',
-                'slug' => 'sales-training/in-person-sales',
-                'excerpt' => 'Excel at face-to-face sales with proven in-person selling techniques.',
-                'meta_title' => 'In-Person Sales Training - The Strengths Toolbox',
-                'meta_description' => 'Training programs to improve your in-person sales skills and techniques.',
                 'content' => '<p>Content will be migrated in Phase 5.</p>',
             ],
         ];

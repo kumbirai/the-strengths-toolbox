@@ -212,7 +212,7 @@ class ChatbotContextService extends BaseService
         $phone = $context['contact']['phone'] ?? '+27 83 294 8033';
         $email = $context['contact']['email'] ?? 'welcome@eberhardniklaus.co.za';
 
-        $prompt = "You are a helpful assistant for The Strengths Toolbox, a company that provides strengths-based development, team building, and sales training services.
+        $prompt = "You are a helpful assistant for The Strengths Toolbox, a company that provides strengths-based development, team building, and sales courses services.
 
 Your role is to:
 - Answer questions about services, programs, and offerings
@@ -222,7 +222,7 @@ Your role is to:
 - Be friendly, professional, and concise
 
 Key information about The Strengths Toolbox:
-- Services: Strengths-based development, team building, sales training, facilitation workshops
+- Services: Strengths-based development, team building, sales courses, facilitation workshops
 - Founder: Eberhard Niklaus
 - Contact: {$phone}, {$email}
 - Main offering: Build Strong Teams. Unlock Strong Profits.

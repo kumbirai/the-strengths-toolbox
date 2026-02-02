@@ -70,6 +70,16 @@ A modern, production-ready Laravel application featuring a complete CMS, blog sy
    npm run build
    ```
 
+6. **Seed database and content** (optional)
+   ```bash
+   php artisan db:seed
+   ```
+   To populate local images after seeding (Sales Courses and TSA blog featured images):
+   ```bash
+   php artisan content:download-sales-courses-images
+   php artisan blog:download-tsa-images
+   ```
+
 ## Running the Application
 
 ### Development Server

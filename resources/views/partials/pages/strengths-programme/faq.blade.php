@@ -23,23 +23,23 @@
                     $faqs = [
                         [
                             'question' => 'What is the Strengths Programme and how can it benefit my business?',
-                            'answer' => 'The Strengths Programme is a comprehensive strengths-based development system designed to help businesses unlock their team\'s potential. By identifying and leveraging natural talents, businesses can improve team performance, increase engagement, reduce turnover, and drive sustainable growth. The program helps align individual strengths with organizational goals, creating a more productive and satisfied workforce.'
+                            'answer' => 'The Strengths Programme is a strengths-based development initiative designed for individuals, managers, salespeople, and teams. It uses assessments like CliftonStrengths and coaching to help participants understand and leverage their natural talents. By tailoring roles to strengths, it helps reduce misalignment, burnout, disengagement, and turnover—all driving stronger collaboration, engagement, and business outcomes.'
                         ],
                         [
                             'question' => 'Who should participate in the Strengths Programme?',
-                            'answer' => 'The Strengths Programme is designed for organizations of all sizes looking to improve team performance. It\'s ideal for businesses experiencing high turnover, struggling with team alignment, missing sales targets, or dealing with employee disengagement. The program offers solutions for individuals, teams, managers, leaders, and salespeople, making it suitable for any level of your organization.'
+                            'answer' => 'The Programme includes four tailored tracks: For Teams – Build stronger collaboration and communication through group assessments, coaching, and workshops. For Salespeople – With the CliftonStrengths for Sales report, use natural strengths to deepen trust, close more deals, and improve performance (by up to 19%). For Managers & Leaders – Enhance leadership by aligning team roles with strengths to boost engagement and productivity. For Individuals – Discover your natural talents, gain confidence, and increase your performance.'
                         ],
                         [
                             'question' => 'How does the Strengths-Based Team Development component work?',
-                            'answer' => 'The team development component focuses on helping team members understand their individual strengths and how they complement each other. Through assessments, workshops, and ongoing support, teams learn to communicate more effectively, collaborate better, and leverage each member\'s unique talents. This creates stronger team cohesion, reduces conflict, and improves overall team performance.'
+                            'answer' => 'This track includes a structured, multi-step process: (1) Each team member completes the CliftonStrengths assessment. (2) One‑on‑one coaching sessions are held with the manager and each team member. (3) Group workshops apply strengths to real business challenges. (4) Ongoing coaching helps sustain results. This collaborative approach enhances communication, trust, goal alignment, and overall team performance.'
                         ],
                         [
                             'question' => 'What results can businesses expect from participating?',
-                            'answer' => 'Businesses typically see measurable improvements in several key areas: increased employee engagement and satisfaction, reduced turnover rates, improved sales performance, better team collaboration, and enhanced leadership effectiveness. Many clients report seeing results within the first few months, with sustained improvements over time as the strengths-based approach becomes embedded in the organizational culture.'
+                            'answer' => 'By focusing on strengths rather than weaknesses, businesses can expect: sales improvements (by up to 19%) and happier, more engaged employees; stronger team collaboration, improved communication, and a positive, high-performance culture; and a reduction in misaligned teams, high turnover, missed sales targets, burnout, and disengagement.'
                         ],
                         [
                             'question' => 'How do I get started with the Strengths Programme?',
-                            'answer' => 'Getting started is easy. Simply book a complimentary 30-minute consultation where we\'ll discuss your business challenges, goals, and how the Strengths Programme can help. Based on your needs, we\'ll recommend the most appropriate program (for individuals, teams, managers, or salespeople) and create a customized plan. There\'s no obligation, and the consultation is completely free.'
+                            'answer' => 'The first step is to book a 30-minute consultation to assess your business or team\'s specific needs and explore how the Strengths Programme can align with your goals.'
                         ]
                     ];
                 @endphp

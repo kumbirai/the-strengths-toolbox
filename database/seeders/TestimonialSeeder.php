@@ -67,6 +67,15 @@ class TestimonialSeeder extends Seeder
                 'is_published' => true,
                 'display_order' => 5,
             ],
+            [
+                'name' => 'Boffin & Fundi Team',
+                'company' => 'Boffin & Fundi',
+                'testimonial' => 'I would like to extend my heartfelt appreciation for the insightful and engaging CliftonStrengths workshop you facilitated for our team. The experience has had a genuinely meaningful impact on both my personal development as a manager and on the overall functioning of our team. The most refreshing part of the workshop was seeing the team gain a clear understanding of what they are naturally good at, and how each of them can meaningfully contribute within the team. It created an environment of self-awareness and appreciation that we had not fully tapped into before. Watching individuals recognise and celebrate their strengths was uplifting, and it sparked valuable conversations about collaboration and personal effectiveness. For me personally, the workshop has helped me understand my team a whole lot better — who excels in specific areas and how to strategically align them with responsibilities that match those strengths. Since the session, we have begun adjusting responsibilities based on each person\'s strengths, and this shift has already started to show positive results. We are gradually seeing improvements in the centre\'s productivity, as well as noticeable boosts in morale and motivation. I have also adopted the practice of designing my day around my own strengths, and I now feel more empowered to ask for support from team members who are naturally strong in areas where I may not be. This has not only improved efficiency but has also strengthened our teamwork and collaboration. We are currently in the process of formally restructuring our team and roles to maximise effectiveness, using the guidance and insights gained from the workshop. It is clear that we have taken the lessons to heart, and we remain committed to continuously developing and leveraging our strengths to become an even more effective and cohesive unit. Thank you once again for the transformative experience. The impact is already evident, and we look forward to building on this foundation.',
+                'rating' => 5,
+                'is_featured' => true,
+                'is_published' => true,
+                'display_order' => 6,
+            ],
         ];
 
         foreach ($testimonials as $testimonialData) {

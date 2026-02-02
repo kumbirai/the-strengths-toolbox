@@ -5,7 +5,7 @@
 {{-- Meta tags are handled by partials/meta.blade.php via $seo variable --}}
 
 @section('content')
-    <x-content-page :page="$page" />
+    <x-content-page :page="$page" :pageImage="$pageImage ?? null" />
 @endsection
 
 @push('schema')

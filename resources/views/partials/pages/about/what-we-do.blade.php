@@ -9,7 +9,7 @@
                 $services = [
                     [
                         'title' => 'Sales Courses',
-                        'description' => 'Comprehensive sales training programs designed to help sales teams and individuals improve their performance, close more deals, and build stronger client relationships through proven sales methodologies.',
+                        'description' => 'Comprehensive sales courses designed to help sales teams and individuals improve their performance, close more deals, and build stronger client relationships through proven sales methodologies.',
                         'icon' => 'chart-bar',
                         'color' => 'primary'
                     ],

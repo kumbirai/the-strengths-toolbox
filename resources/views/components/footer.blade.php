@@ -25,6 +25,11 @@
                         </a>
                     </li>
                     <li>
+                        <a href="{{ route('pages.show', 'sales-courses') }}" class="hover:text-primary-400 hover:translate-x-1 inline-block transition-all">
+                            Sales Courses
+                        </a>
+                    </li>
+                    <li>
                         <a href="{{ route('strengths-programme') }}" class="hover:text-primary-400 hover:translate-x-1 inline-block transition-all">
                             Strengths Programme
                         </a>
