@@ -137,6 +137,39 @@
         </div>
     </section>
 
+    {{-- Comments Section --}}
+    <section class="section-padding section-light">
+        <div class="container-custom">
+            <div class="max-w-4xl mx-auto">
+                @if(session('success'))
+                    <div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
+                        {{ session('success') }}
+                    </div>
+                @endif
+
+                @if(session('info'))
+                    <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-700">
+                        {{ session('info') }}
+                    </div>
+                @endif
+
+                @if(session('error'))
+                    <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                        {{ session('error') }}
+                    </div>
+                @endif
+
+                {{-- Comments List --}}
+                <x-blog.comment-list :comments="$comments" :post="$post" />
+
+                {{-- Comment Form --}}
+                <div class="mt-8">
+                    <x-blog.comment-form :post="$post" />
+                </div>
+            </div>
+        </div>
+    </section>
+
     {{-- Related Posts --}}
     @if($relatedPosts && $relatedPosts->count() > 0)
         <section class="section-padding section-muted">

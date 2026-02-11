@@ -8,8 +8,16 @@ use App\Models\User;
 use App\Services\MediaService;
 use Illuminate\Database\Seeder;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
+/**
+ * Seed media library and image storage
+ * 
+ * Ensures storage link exists, downloads images, uploads to media library,
+ * and assigns featured images to blog posts.
+ */
 class MediaSeeder extends Seeder
 {
     protected MediaService $mediaService;
@@ -23,18 +31,127 @@ class MediaSeeder extends Seeder
 
     public function run(): void
     {
-        $this->command->info('Restoring images to media library...');
+        $this->command->info('Seeding media library and images...');
+        $this->command->newLine();
+
+        // Ensure storage symlink exists
+        $this->ensureStorageLink();
+
+        // Download Sales Courses and blog images
+        $this->downloadImages();
+
+        // Upload images from optimized directory to media library
+        $this->uploadOptimizedImages();
+
+        // Assign blog post featured images
+        $this->assignBlogPostImages();
+
+        $this->command->newLine();
+        $this->command->info('✓ Media seeding completed successfully!');
+    }
+
+    protected function ensureStorageLink(): void
+    {
+        $this->command->info('Ensuring storage link...');
+
+        $link = public_path('storage');
+        if (! File::exists($link)) {
+            Artisan::call('storage:link');
+            $this->command->line('  ✓ Storage link created');
+        } else {
+            $this->command->line('  ✓ Storage link already exists');
+        }
+    }
+
+    protected function downloadImages(): void
+    {
+        $this->command->info('Downloading images...');
+
+        // Download Sales Courses images (referenced in page content as /storage/sales-courses/...)
+        $exitCode = Artisan::call('content:download-sales-courses-images');
+        if ($exitCode === 0) {
+            $this->command->line('  ✓ Sales Courses images downloaded');
+        } else {
+            $this->command->warn('  ⊘ Sales Courses image download had issues (check network)');
+        }
+
+        // Download blog media (featured and inline images from scraped blogs)
+        $exitCode = Artisan::call('blog:download-media');
+        if ($exitCode === 0) {
+            $this->command->line('  ✓ Blog media downloaded');
+        } else {
+            $this->command->warn('  ⊘ Blog media download had issues (check network or scraped-blogs.json)');
+        }
+    }
+
+    protected function uploadBlogImages(): void
+    {
+        $this->command->info('Uploading blog images to media library...');
+        $this->command->newLine();
+
+        $blogPath = storage_path('app/public/blog');
+
+        if (! is_dir($blogPath)) {
+            $this->command->warn("Blog images directory not found: {$blogPath}");
+            $this->command->warn('Skipping blog image upload. Run: php artisan blog:download-media');
+
+            return;
+        }
+
+        $images = $this->findImages($blogPath);
+        $uploaded = 0;
+        $skipped = 0;
+        $errors = 0;
+
+        foreach ($images as $imagePath) {
+            try {
+                $filename = basename($imagePath);
+                $existing = Media::where('filename', $filename)
+                    ->orWhere('original_filename', $filename)
+                    ->first();
+
+                if ($existing) {
+                    $skipped++;
+                    $this->command->line("  ⊘ Skipped (already exists): {$filename}");
+                    continue;
+                }
+
+                $media = $this->uploadImage($imagePath);
+                $uploaded++;
+                $this->command->line("  ✓ Uploaded: {$media->filename}");
+            } catch (\Exception $e) {
+                $errors++;
+                $this->command->error("  ✗ Error uploading {$imagePath}: ".$e->getMessage());
+            }
+        }
+
+        $this->command->newLine();
+        $this->command->info('Blog Image Upload Summary:');
+        $this->command->line("  Uploaded: {$uploaded}");
+        $this->command->line("  Skipped: {$skipped}");
+        if ($errors > 0) {
+            $this->command->error("  Errors: {$errors}");
+        }
+        $this->command->newLine();
+    }
+
+    protected function uploadOptimizedImages(): void
+    {
+        $this->command->info('Uploading optimized images to media library...');
         $this->command->newLine();
 
         // Get or create a default user for uploaded_by
         $user = User::first();
         $this->userId = $user ? $user->id : null;
 
+        // Upload blog images from storage/app/public/blog
+        $this->uploadBlogImages();
+
         $path = base_path('content-migration/images/optimized');
 
         if (! is_dir($path)) {
             $this->command->warn("Optimized images directory not found: {$path}");
-            $this->command->warn('Skipping image restoration. Run: php artisan images:upload-migrated');
+            $this->command->warn('Skipping image upload. Run: php artisan images:upload-migrated');
 
             return;
         }
@@ -75,10 +192,6 @@ class MediaSeeder extends Seeder
         if ($errors > 0) {
             $this->command->error("  Errors: {$errors}");
         }
-
-        // Assign blog post featured images
-        $this->command->newLine();
-        $this->assignBlogPostImages();
     }
 
     protected function findImages(string $path): array
@@ -147,9 +260,9 @@ class MediaSeeder extends Seeder
 
     protected function determineDirectory(string $imagePath): string
     {
-        // Extract directory from path
+        // Extract directory from path, removing strengthstoolbox/tsa prefixes
         // Example: content-migration/images/optimized/tsa/homepage/hero/image.webp
-        // Should become: media/tsa/homepage/hero
+        // Should become: media/homepage/hero
 
         $basePath = base_path('content-migration/images/optimized/');
         $relativePath = str_replace($basePath, '', $imagePath);
@@ -157,6 +270,14 @@ class MediaSeeder extends Seeder
 
         // Handle root level images (no subdirectory)
         if ($directory === '.') {
+            return 'media';
+        }
+
+        // Remove strengthstoolbox/ and tsa/ prefixes from the directory path
+        $directory = preg_replace('#^(strengthstoolbox|tsa)/#', '', $directory);
+
+        // If directory is now empty or just '.', return 'media'
+        if ($directory === '' || $directory === '.') {
             return 'media';
         }
 
@@ -214,6 +335,7 @@ class MediaSeeder extends Seeder
 
     protected function assignBlogPostImages(): void
     {
+        $this->command->newLine();
         $this->command->info('Assigning featured images to blog posts...');
 
         $mappingPath = base_path('content-migration/images/image-mapping.json');

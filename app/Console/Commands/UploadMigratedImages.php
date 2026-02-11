@@ -140,13 +140,21 @@ class UploadMigratedImages extends Command
 
     protected function determineDirectory(string $imagePath): string
     {
-        // Extract directory from path
+        // Extract directory from path, removing strengthstoolbox/tsa prefixes
         // Example: content-migration/images/optimized/tsa/homepage/hero/image.webp
-        // Should become: media/tsa/homepage/hero
+        // Should become: media/homepage/hero
 
         $basePath = base_path('content-migration/images/optimized/');
         $relativePath = str_replace($basePath, '', $imagePath);
         $directory = dirname($relativePath);
+
+        // Remove strengthstoolbox/ and tsa/ prefixes from the directory path
+        $directory = preg_replace('#^(strengthstoolbox|tsa)/#', '', $directory);
+
+        // If directory is now empty or just '.', return 'media'
+        if ($directory === '' || $directory === '.') {
+            return 'media';
+        }
 
         return 'media/'.$directory;
     }

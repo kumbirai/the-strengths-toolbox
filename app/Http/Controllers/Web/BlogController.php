@@ -69,10 +69,15 @@ class BlogController extends Controller
             // Get related posts
             $relatedPosts = $this->blogPostService->getRelated($post, 3);
 
+            // Get approved comments (top-level only, replies loaded via relationship)
+            $comments = $post->approvedComments()->with(['approvedReplies' => function ($query) {
+                $query->orderBy('created_at', 'asc');
+            }])->get();
+
             // Get SEO metadata
             $seo = $this->seoService->getBlogPostMeta($post);
 
-            return view('blog.show', compact('post', 'relatedPosts', 'seo'));
+            return view('blog.show', compact('post', 'relatedPosts', 'comments', 'seo'));
         } catch (\Exception $e) {
             \Log::error('Blog post show error', [
                 'slug' => $slug,

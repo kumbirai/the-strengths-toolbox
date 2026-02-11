@@ -7,17 +7,17 @@ use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 
 /**
- * Comprehensive content migration seeder
+ * Comprehensive content seeder
  * Populates CMS with all pages from existing website.
  *
  * Sales Courses images are stored locally at storage/app/public/sales-courses/.
  * Run: php artisan content:download-sales-courses-images
  */
-class ContentMigrationSeeder extends Seeder
+class ContentSeeder extends Seeder
 {
     public function run(): void
     {
-        $this->command->info('Starting comprehensive content migration...');
+        $this->command->info('Seeding content pages...');
         $this->command->newLine();
 
         // Import main pages from transformed content
@@ -32,8 +32,8 @@ class ContentMigrationSeeder extends Seeder
         $this->seedStandalonePages();
 
         $this->command->newLine();
-        $this->command->info('✓ Content migration completed successfully!');
-        $this->command->info('Total pages created: '.Page::count());
+        $this->command->info('✓ Content pages seeded successfully!');
+        $this->command->info('Total pages: '.Page::count());
     }
 
     /**

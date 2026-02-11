@@ -32,6 +32,14 @@ Route::get('/blog/category/{slug}', [BlogController::class, 'category'])->name('
 Route::get('/blog/tag/{slug}', [BlogController::class, 'tag'])->name('blog.tag');
 Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 
+// Blog comment routes
+Route::post('/blog/{slug}/comments', [\App\Http\Controllers\Web\BlogCommentController::class, 'store'])
+    ->middleware('rate.limit.forms')
+    ->name('blog.comments.store');
+Route::post('/blog/{slug}/comments/{comment}/reply', [\App\Http\Controllers\Web\BlogCommentController::class, 'storeReply'])
+    ->middleware('rate.limit.forms')
+    ->name('blog.comments.reply');
+
 // Contact routes
 Route::get('/contact', [ContactController::class, 'show'])->name('contact');
 Route::post('/contact', [ContactController::class, 'submit'])

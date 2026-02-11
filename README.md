@@ -74,11 +74,6 @@ A modern, production-ready Laravel application featuring a complete CMS, blog sy
    ```bash
    php artisan db:seed
    ```
-   To populate local images after seeding (Sales Courses and TSA blog featured images):
-   ```bash
-   php artisan content:download-sales-courses-images
-   php artisan blog:download-tsa-images
-   ```
 
 ## Running the Application
 

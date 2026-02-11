@@ -20,12 +20,15 @@ class OptimizeImages extends Command
 
     protected $description = 'Optimize images for production (convert to WebP, compress, resize)';
 
-    protected ImageManager $imageManager;
+    protected ?ImageManager $imageManager = null;
 
-    public function __construct()
+    protected function getImageManager(): ImageManager
     {
-        parent::__construct();
-        $this->imageManager = new ImageManager(new Driver);
+        if ($this->imageManager === null) {
+            $this->imageManager = new ImageManager(new Driver);
+        }
+
+        return $this->imageManager;
     }
 
     public function handle(): int
@@ -136,7 +139,7 @@ class OptimizeImages extends Command
         }
 
         try {
-            $image = $this->imageManager->read($path);
+            $image = $this->getImageManager()->read($path);
 
             // Determine max width based on image context
             $imageMaxWidth = $this->determineMaxWidth($path, $maxWidth);

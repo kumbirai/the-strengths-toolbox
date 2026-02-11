@@ -32,7 +32,7 @@ class MediaService
             'mime_type' => $file->getMimeType(),
             'size' => $file->getSize(),
             'disk' => $this->disk,
-            'uploaded_by' => auth()->id(),
+            'uploaded_by' => $options['uploaded_by'] ?? auth()->id(),
             'alt_text' => $options['alt_text'] ?? null,
             'description' => $options['description'] ?? null,
         ];

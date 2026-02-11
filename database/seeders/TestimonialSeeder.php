@@ -6,21 +6,42 @@ use App\Models\Testimonial;
 use Illuminate\Database\Seeder;
 
 /**
- * Basic testimonial seeder
+ * Seed testimonials from both live websites
+ * This seeder creates testimonials with embedded content.
+ * All testimonials are embedded directly in this seeder.
  *
  * Testimonials sourced from:
  * - https://www.thestrengthstoolbox.com/testimonials/
  * - https://www.tsabusinessschool.co.za/ (homepage)
  *
- * For comprehensive testimonials from both live websites,
- * use TestimonialMigrationSeeder instead.
+ * To add new testimonials, add entries to the $testimonials array below.
  */
 class TestimonialSeeder extends Seeder
 {
     public function run(): void
     {
-        // Use the same testimonials as the migration seeder
-        // This ensures consistency across seeders
+        $this->command->info('Seeding testimonials...');
+        $this->command->newLine();
+
+        $this->seedTestimonials();
+
+        $this->command->newLine();
+        $this->command->info('✓ Testimonials seeded successfully!');
+        $this->command->info('Total testimonials: '.Testimonial::count());
+    }
+
+    /**
+     * Seed testimonials with embedded content
+     *
+     * All testimonial content is embedded directly in this seeder.
+     * Testimonials are sourced from both:
+     * - The Strengths Toolbox website (thestrengthstoolbox.com/testimonials/)
+     * - The Strengths Toolbox website homepage (thestrengthstoolbox.com)
+     *
+     * To add new testimonials, add entries to the $testimonials array below.
+     */
+    protected function seedTestimonials(): void
+    {
         $testimonials = [
             [
                 'name' => 'Xolani Matthews',
@@ -79,13 +100,15 @@ class TestimonialSeeder extends Seeder
         ];
 
         foreach ($testimonials as $testimonialData) {
-            Testimonial::firstOrCreate(
-                [
-                    'name' => $testimonialData['name'],
-                    'company' => $testimonialData['company'],
-                ],
-                $testimonialData
-            );
+            $testimonial = Testimonial::firstOrNew([
+                'name' => $testimonialData['name'],
+                'company' => $testimonialData['company'],
+            ]);
+
+            $testimonial->fill($testimonialData);
+            $testimonial->save();
+
+            $this->command->line("  ✓ Imported: {$testimonialData['name']}".($testimonialData['company'] ? " ({$testimonialData['company']})" : ''));
         }
     }
 }

@@ -49,6 +49,21 @@ class BlogPost extends Model
         return $this->belongsToMany(Tag::class, 'blog_post_tag');
     }
 
+    public function comments()
+    {
+        return $this->hasMany(BlogComment::class)->whereNull('parent_id')->orderBy('created_at', 'desc');
+    }
+
+    public function allComments()
+    {
+        return $this->hasMany(BlogComment::class)->orderBy('created_at', 'desc');
+    }
+
+    public function approvedComments()
+    {
+        return $this->comments()->approved()->notSpam();
+    }
+
     public function scopePublished($query)
     {
         return $query->where('is_published', true)

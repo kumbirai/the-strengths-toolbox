@@ -9,17 +9,12 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            UserSeeder::class,
-            PageSeeder::class,
-            ExistingContentPagesSeeder::class, // Phase 4: Existing content page structure
-            ContentMigrationSeeder::class, // Phase 5: Populate actual content from existing website
-            CategorySeeder::class,
-            TagSeeder::class,
-            BlogPostMigrationSeeder::class,
-            MediaSeeder::class, // Restore images from optimized directory and assign to blog posts
-            FormSeeder::class,
-            TestimonialSeeder::class,
-            PopulateImageStorageSeeder::class, // Sales Courses + blog images (download to storage, assign blog featured_image)
+            FoundationSeeder::class,      // Users, Forms
+            TaxonomySeeder::class,        // Categories, Tags
+            ContentSeeder::class,          // All pages
+            BlogSeeder::class,             // Blog posts (needs Users, Categories, Tags)
+            TestimonialSeeder::class,     // Testimonials
+            MediaSeeder::class,            // Images (needs Users, BlogPosts)
         ]);
     }
 }

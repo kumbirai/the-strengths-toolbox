@@ -19,7 +19,22 @@ class ForceHttps
         $isProxiedHttps = $request->header('X-Forwarded-Proto') === 'https' 
                        || $request->header('X-Forwarded-Ssl') === 'on';
 
-        // Force HTTPS URLs when behind HTTPS proxy or in production
+        // Determine the correct scheme to use
+        $scheme = 'http';
+        if ($isProxiedHttps || app()->environment('production')) {
+            $scheme = 'https';
+        }
+
+        // Ensure URL generation uses the current request's host instead of APP_URL
+        // This fixes pagination and other URL generation to use the actual request host
+        // (e.g., localhost:8000 instead of a hardcoded ngrok URL)
+        if (! app()->runningInConsole()) {
+            $host = $request->getHttpHost();
+            $rootUrl = $scheme.'://'.$host;
+            \URL::forceRootUrl($rootUrl);
+        }
+
+        // Force HTTPS scheme when behind HTTPS proxy or in production
         if ($isProxiedHttps || app()->environment('production')) {
             \URL::forceScheme('https');
             
