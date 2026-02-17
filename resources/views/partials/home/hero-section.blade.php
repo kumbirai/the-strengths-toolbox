@@ -35,6 +35,13 @@
                 </a>
             </div>
 
+            <!-- Gallup Certification Badge -->
+            <div class="mt-8 flex justify-center">
+                <a href="{{ route('strengths-programme') }}" class="hover:opacity-90 transition-opacity">
+                    <x-gallup-badge size="large" />
+                </a>
+            </div>
+
             <!-- Trust Indicators -->
             <div class="mt-12 flex flex-wrap justify-center items-center gap-8 text-sm text-primary-200">
                 <div class="flex items-center gap-2">

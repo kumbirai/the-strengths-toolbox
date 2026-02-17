@@ -169,11 +169,12 @@ class TaxonomySeeder extends Seeder
     }
 
     /**
-     * Extract and create additional categories and tags from scraped inventory
+     * Extract and create additional categories and tags from blog inventory
+     * Reads from database/data directory (part of seeder structure, not content-migration)
      */
     protected function extractFromScrapedInventory(): void
     {
-        $inventoryPath = base_path('content-migration/scraped-blogs.json');
+        $inventoryPath = database_path('data/scraped-blogs.json');
 
         if (! file_exists($inventoryPath)) {
             return; // Skip if inventory doesn't exist

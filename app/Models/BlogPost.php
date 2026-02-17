@@ -74,4 +74,29 @@ class BlogPost extends Model
     {
         $this->increment('views_count');
     }
+
+    /**
+     * Get the featured image URL
+     * Handles both storage paths and public paths
+     */
+    public function getFeaturedImageUrlAttribute(): ?string
+    {
+        if (empty($this->featured_image)) {
+            return null;
+        }
+
+        // Remove any double prefix first (images/images/blog/... -> images/blog/...)
+        $path = $this->featured_image;
+        if (str_starts_with($path, 'images/images/')) {
+            $path = substr($path, 7); // Remove 'images/'
+        }
+
+        // If path starts with images/blog/, it's in public folder
+        if (str_starts_with($path, 'images/blog/')) {
+            return asset($path);
+        }
+
+        // Otherwise, assume it's in storage
+        return asset('storage/' . $path);
+    }
 }

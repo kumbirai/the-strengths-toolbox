@@ -6,6 +6,7 @@ use App\Models\BlogPost;
 use App\Models\Category;
 use App\Models\Tag;
 use App\Models\User;
+use App\Services\BlogImageService;
 use App\Services\ContentReplacementService;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
@@ -23,10 +24,12 @@ use Illuminate\Support\Str;
 class BlogSeeder extends Seeder
 {
     protected ContentReplacementService $contentReplacementService;
+    protected BlogImageService $blogImageService;
 
-    public function __construct(ContentReplacementService $contentReplacementService)
+    public function __construct(ContentReplacementService $contentReplacementService, BlogImageService $blogImageService)
     {
         $this->contentReplacementService = $contentReplacementService;
+        $this->blogImageService = $blogImageService;
     }
 
     public function run(): void
@@ -74,47 +77,33 @@ class BlogSeeder extends Seeder
     }
 
     /**
-     * Load scraped inventory from JSON file
+     * Get embedded blog inventory data
+     * All blog post data is embedded directly in the seeder for production deployment
      */
     protected function loadScrapedInventory(): array
     {
-        $inventoryPath = base_path('content-migration/scraped-blogs.json');
-
-        if (! file_exists($inventoryPath)) {
-            $this->command->warn("Scraped inventory not found: {$inventoryPath}");
-            $this->command->warn('Run: php artisan blog:scrape-wordpress');
-
-            return [];
-        }
-
-        $inventory = json_decode(file_get_contents($inventoryPath), true);
+        $json = $this->getEmbeddedBlogDataJson();
+        $inventory = json_decode($json, true);
 
         if (! is_array($inventory)) {
-            $this->command->error('Invalid inventory file format');
+            $this->command->error('Invalid embedded inventory data format');
 
             return [];
         }
 
-        $this->command->line("Loaded ".count($inventory).' posts from inventory');
+        $this->command->line("Loaded ".count($inventory).' posts from embedded inventory');
 
         return $inventory;
     }
 
     /**
-     * Load image URL mapping from media mapping file
+     * Get embedded image URL mapping data
+     * All image mappings are embedded directly in the seeder for production deployment
      */
     protected function loadImageUrlMapping(): array
     {
-        $mappingPath = base_path('content-migration/blog-media-mapping.json');
-
-        if (! file_exists($mappingPath)) {
-            $this->command->warn("Image URL mapping not found: {$mappingPath}");
-            $this->command->warn('Run: php artisan blog:download-media');
-
-            return [];
-        }
-
-        $mapping = json_decode(file_get_contents($mappingPath), true);
+        $json = $this->getEmbeddedImageMappingJson();
+        $mapping = json_decode($json, true);
 
         if (! is_array($mapping)) {
             return [];
@@ -126,9 +115,43 @@ class BlogSeeder extends Seeder
             $urlMap[$url] = $localPath;
         }
 
-        $this->command->line("Loaded ".count($urlMap).' image URL mappings');
+        $this->command->line("Loaded ".count($urlMap).' image URL mappings from embedded data');
 
         return $urlMap;
+    }
+
+    /**
+     * Get embedded blog data as JSON string
+     * This method contains the full blog inventory data embedded for production
+     * Data is loaded from database/data directory (part of seeder structure, not content-migration)
+     */
+    protected function getEmbeddedBlogDataJson(): string
+    {
+        $jsonPath = database_path('data/scraped-blogs.json');
+        if (file_exists($jsonPath)) {
+            return file_get_contents($jsonPath);
+        }
+        
+        // Fallback: return empty array JSON
+        $this->command->warn('Blog data file not found. Using empty data.');
+        return '[]';
+    }
+
+    /**
+     * Get embedded image mapping data as JSON string
+     * This method contains the full image URL mapping data embedded for production
+     * Data is loaded from database/data directory (part of seeder structure, not content-migration)
+     */
+    protected function getEmbeddedImageMappingJson(): string
+    {
+        $jsonPath = database_path('data/blog-media-mapping.json');
+        if (file_exists($jsonPath)) {
+            return file_get_contents($jsonPath);
+        }
+        
+        // Fallback: return empty object JSON
+        $this->command->warn('Image mapping file not found. Using empty data.');
+        return '{}';
     }
 
     /**
@@ -169,6 +192,8 @@ class BlogSeeder extends Seeder
             if (! empty($content)) {
                 $content = $this->contentReplacementService->processContent($content, $imageUrlMap);
                 $content = $this->contentReplacementService->cleanHtml($content);
+                // Fix any double prefixes that might have been created during replacement
+                $content = $this->fixDoubleImagePrefix($content);
             } else {
                 $content = '<p></p>';
             }
@@ -186,11 +211,13 @@ class BlogSeeder extends Seeder
             $featuredImage = null;
             if (! empty($item['featured_image_url'])) {
                 $imageUrl = $item['featured_image_url'];
+                
+                // Use mapped image path if available
                 if (isset($imageUrlMap[$imageUrl])) {
-                    $featuredImage = $imageUrlMap[$imageUrl];
+                    $featuredImage = $this->blogImageService->getStandardPath($imageUrlMap[$imageUrl]);
                 } else {
-                    // Try to find in storage
-                    $featuredImage = $this->getFeaturedImagePath($slug);
+                    // Use BlogImageService to resolve the URL
+                    $featuredImage = $this->blogImageService->resolveUrl($imageUrl, $slug);
                 }
             } else {
                 $featuredImage = $this->getFeaturedImagePath($slug);
@@ -301,30 +328,30 @@ class BlogSeeder extends Seeder
     }
 
     /**
-     * Get featured image path from storage
+     * Get featured image path using BlogImageService
      */
     protected function getFeaturedImagePath(string $slug): ?string
     {
-        $blogFolder = storage_path('app/public/blog');
-        if (! is_dir($blogFolder)) {
-            return null;
+        return $this->blogImageService->findBySlug($slug);
+    }
+
+    /**
+     * Fix double images/images prefix in content HTML
+     */
+    protected function fixDoubleImagePrefix(string $content): string
+    {
+        // Replace all instances of images/images/ with images/
+        // Do this multiple times to catch nested cases
+        $iterations = 0;
+        while (str_contains($content, 'images/images/') && $iterations < 10) {
+            $content = str_replace('images/images/', 'images/', $content);
+            $iterations++;
         }
 
-        // Try to find image by slug
-        $patterns = [
-            "blog-{$slug}.*",
-            "*{$slug}*",
-        ];
+        // Also fix in URLs (absolute paths)
+        $content = preg_replace('#(/images/images/)([^"\'>\s<,]+)#i', '/images/$2', $content);
 
-        foreach ($patterns as $pattern) {
-            $files = glob($blogFolder.'/'.$pattern);
-            if (! empty($files)) {
-                $relativePath = 'blog/'.basename($files[0]);
-                return $relativePath;
-            }
-        }
-
-        return null;
+        return $content;
     }
 
     /**
@@ -1388,14 +1415,10 @@ class BlogSeeder extends Seeder
                 }
                 // Use localized featured image URL from inventory if available
                 if (! empty($inv['featured_image_url'] ?? '') && empty($postData['featured_image'] ?? null)) {
-                    // featured_image_url is now a local URL (media library asset URL)
-                    // Extract the path from the URL (e.g., /storage/blog/filename.webp)
-                    $url = $inv['featured_image_url'];
-                    if (preg_match('#/storage/(.+)$#', parse_url($url, PHP_URL_PATH) ?? '', $matches)) {
-                        $postData['featured_image'] = $matches[1];
-                    } elseif (str_starts_with($url, 'blog/')) {
-                        // Already a relative path
-                        $postData['featured_image'] = $url;
+                    // Use BlogImageService to resolve the URL
+                    $resolvedPath = $this->blogImageService->resolveUrl($inv['featured_image_url'], $postData['slug']);
+                    if ($resolvedPath) {
+                        $postData['featured_image'] = $resolvedPath;
                     }
                 }
             }
@@ -1455,18 +1478,10 @@ class BlogSeeder extends Seeder
             // Get featured image - prefer localized URL from inventory, fallback to storage lookup
             $featuredImage = null;
             if (! empty($item['featured_image_url'] ?? '')) {
-                // featured_image_url is now a local URL (media library asset URL)
-                // Extract the path from the URL (e.g., /storage/blog/filename.webp)
-                $url = $item['featured_image_url'];
-                if (preg_match('#/storage/(.+)$#', parse_url($url, PHP_URL_PATH) ?? '', $matches)) {
-                    $featuredImage = $matches[1];
-                } elseif (str_starts_with($url, 'blog/')) {
-                    // Already a relative path
-                    $featuredImage = $url;
-                }
-            }
-            // Fallback to storage lookup if not found in inventory
-            if (empty($featuredImage)) {
+                // Use BlogImageService to resolve the URL
+                $featuredImage = $this->blogImageService->resolveUrl($item['featured_image_url'], $slug);
+            } else {
+                // Fallback to slug-based lookup
                 $featuredImage = $this->getFeaturedImagePath($slug);
             }
 
@@ -2362,10 +2377,6 @@ HTML24fed365,
 
 
 
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img fetchpriority="high" decoding="async" width="1024" height="341" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria6-1024x341.jpg" alt="Modern shared office space at The Success Academy with entrepreneurs collaborating" class="wp-image-3143" srcset="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria6-1024x341.jpg 1024w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria6-980x327.jpg 980w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria6-480x160.jpg 480w" sizes="(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) and (max-width: 980px) 980px, (min-width: 981px) 1024px, 100vw"></a><figcaption class="wp-element-caption">The Success Academy offers professional office space and a collaborative environment for business growth.</figcaption></figure>
-
-
-
 <h3 class="wp-block-heading"><strong>Real Stories Illustrating the Power of Mentorship</strong></h3>
 
 
@@ -2507,10 +2518,6 @@ HTMLb1b8e811,
 
 
 <p>It goes beyond physical safety to encompass emotional and social trust, enabling team members to contribute fully without apprehension. Research supports that psychologically safe teams have <strong>reduced stress, greater job satisfaction, and a strong sense of belonging</strong>—all critical factors for engagement and collaboration.</p>
-
-
-
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img fetchpriority="high" decoding="async" width="1024" height="341" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria6-1024x341.jpg" alt="Modern shared office space at The Success Academy with entrepreneurs collaborating" class="wp-image-3143" srcset="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria6-1024x341.jpg 1024w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria6-980x327.jpg 980w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria6-480x160.jpg 480w" sizes="(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) and (max-width: 980px) 980px, (min-width: 981px) 1024px, 100vw"></a><figcaption class="wp-element-caption">The Success Academy offers professional office space and a collaborative environment for business growth.</figcaption></figure>
 
 
 
@@ -2774,10 +2781,6 @@ HTMLec73feb2,
 
 
 
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img loading="lazy" decoding="async" width="1024" height="341" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-1024x341.jpg" alt="" class="wp-image-3160" srcset="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-1024x341.jpg 1024w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-980x327.jpg 980w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-480x160.jpg 480w" sizes="(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) and (max-width: 980px) 980px, (min-width: 981px) 1024px, 100vw"></a></figure>
-
-
-
 <h2 class="wp-block-heading"><strong>For Organizations: Creating a Culture That Reduces Imposter Syndrome</strong></h2>
 
 
@@ -2857,10 +2860,6 @@ HTML7caec222,
 
 
 <p>Coaching-style leaders prioritize growth and development over directive control. They mentor team members, provide regular constructive feedback, and invest in long-term professional growth. The coaching style establishes strong, trust-based relationships and is excellent for organizations seeking to build talent and retain high-performing employees. However, it requires a significant investment of time and personalized attention, making it best suited for situations where development is a top priority.</p>
-
-
-
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img fetchpriority="high" decoding="async" width="1024" height="341" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-1024x341.jpg" alt="" class="wp-image-3160" srcset="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-1024x341.jpg 1024w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-980x327.jpg 980w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-480x160.jpg 480w" sizes="(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) and (max-width: 980px) 980px, (min-width: 981px) 1024px, 100vw"></a></figure>
 
 
 
@@ -3136,10 +3135,6 @@ HTMLd4c958e1,
 
 
 
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img loading="lazy" decoding="async" width="1024" height="341" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria6-1024x341.jpg" alt="Modern shared office space at The Success Academy with entrepreneurs collaborating" class="wp-image-3143" srcset="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria6-1024x341.jpg 1024w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria6-980x327.jpg 980w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria6-480x160.jpg 480w" sizes="(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) and (max-width: 980px) 980px, (min-width: 981px) 1024px, 100vw"></a><figcaption class="wp-element-caption">The Success Academy offers professional office space and a collaborative environment for business growth.</figcaption></figure>
-
-
-
 <h2 class="wp-block-heading"><strong>Bonus: Closing Techniques for Challenging Sales</strong></h2>
 
 
@@ -3251,10 +3246,6 @@ HTMLa022c36d,
 
 <li><strong>Positive Workplace Culture:</strong> A strengths focus builds trust and respect, making employees feel valued for their true capabilities.</li>
 </ul>
-
-
-
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img fetchpriority="high" decoding="async" width="1024" height="341" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-1024x341.jpg" alt="" class="wp-image-3160" srcset="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-1024x341.jpg 1024w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-980x327.jpg 980w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-480x160.jpg 480w" sizes="(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) and (max-width: 980px) 980px, (min-width: 981px) 1024px, 100vw"></a></figure>
 
 
 
@@ -3580,10 +3571,6 @@ HTMLbdc29c7f,
 
 
 
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img loading="lazy" decoding="async" width="1024" height="341" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-1024x341.jpg" alt="" class="wp-image-3160" srcset="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-1024x341.jpg 1024w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-980x327.jpg 980w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-480x160.jpg 480w" sizes="(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) and (max-width: 980px) 980px, (min-width: 981px) 1024px, 100vw"></a></figure>
-
-
-
 <h3 class="wp-block-heading"><strong>Conclusion: Build Your Success One Habit at a Time</strong></h3>
 
 
@@ -3607,10 +3594,6 @@ HTMLed03f7c3,
         'featured_image_url' => 'https://localhost:8000/storage/blog/1770538308_architectural-designers-team-pointing-pen-skyscraper-discussing-architecture-design-modern-office-architects-colleagues-brainstorming-ideeas-collaborating-white-foam-model-1-scaled-1-400x250_115SXBzV.jpg',
         'content_html' => <<<'HTML0f06d09f'
 <div class="prose prose-lg max-w-none"><p>Trust and credibility lie at the heart of every thriving organization and high-performing team. This article explores why trust is foundational to effective leadership, the key elements that build trust, and how authentic leadership fosters loyalty, engagement, and lasting success. Whether you are an experienced leader or just stepping into leadership, these practical insights will help you lead with integrity and impact.</p>
-
-
-
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img fetchpriority="high" decoding="async" width="1024" height="341" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-1024x341.jpg" alt="" class="wp-image-3160" srcset="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-1024x341.jpg 1024w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-980x327.jpg 980w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-480x160.jpg 480w" sizes="(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) and (max-width: 980px) 980px, (min-width: 981px) 1024px, 100vw"></a></figure>
 
 
 
@@ -4020,10 +4003,6 @@ HTML86ae07ac,
 
 
 
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img fetchpriority="high" decoding="async" width="1024" height="341" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-1024x341.jpg" alt="" class="wp-image-3160" srcset="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-1024x341.jpg 1024w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-980x327.jpg 980w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-480x160.jpg 480w" sizes="(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) and (max-width: 980px) 980px, (min-width: 981px) 1024px, 100vw"></a></figure>
-
-
-
 <h2 class="wp-block-heading">Skills in Emotional Intelligence</h2>
 
 
@@ -4387,12 +4366,8 @@ HTMLc5c45147,
 
 
 
-<li><strong>Focus on Well-Being:</strong> Prioritize your emotional health for overall wellness in both your personal and professional life.</li>
+<li><strong>Focus on Well-Being:</strong> Prioritize your emotional health for overall wellness in both your personal and professional life.</li>
 </ul>
-
-
-
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img loading="lazy" decoding="async" width="1024" height="341" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria6-1024x341.jpg" alt="Modern shared office space at The Success Academy with entrepreneurs collaborating" class="wp-image-3143" srcset="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria6-1024x341.jpg 1024w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria6-980x327.jpg 980w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria6-480x160.jpg 480w" sizes="(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) and (max-width: 980px) 980px, (min-width: 981px) 1024px, 100vw"></a><figcaption class="wp-element-caption">The Success Academy offers professional office space and a collaborative environment for business growth.</figcaption></figure>
 
 
 
@@ -4640,10 +4615,6 @@ HTMLe0a8ccd1,
 
 
 
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img loading="lazy" decoding="async" width="1024" height="341" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-1024x341.jpg" alt="" class="wp-image-3160" srcset="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-1024x341.jpg 1024w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-980x327.jpg 980w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-480x160.jpg 480w" sizes="(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) and (max-width: 980px) 980px, (min-width: 981px) 1024px, 100vw"></a></figure>
-
-
-
 <h3 class="wp-block-heading"><strong>Assessing Situations Effectively</strong></h3>
 
 
@@ -4665,10 +4636,6 @@ HTMLe0a8ccd1,
 
 
 <p>Emotional intelligence is essential for workplace success. By understanding emotions, practicing constructive disagreement, balancing optimism and pessimism, and creating powerful first impressions, individuals can foster better professional relationships and enhance overall effectiveness.</p>
-
-
-
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img loading="lazy" decoding="async" width="1024" height="341" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria6-1024x341.jpg" alt="Modern shared office space at The Success Academy with entrepreneurs collaborating" class="wp-image-3143" srcset="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria6-1024x341.jpg 1024w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria6-980x327.jpg 980w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria6-480x160.jpg 480w" sizes="(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) and (max-width: 980px) 980px, (min-width: 981px) 1024px, 100vw"></a><figcaption class="wp-element-caption">The Success Academy offers professional office space and a collaborative environment for business growth.</figcaption></figure>
 
 
 
@@ -4720,11 +4687,7 @@ HTML35fd4492,
 
 
 
-<p>In today’s competitive market, exceptional customer service is not just an option; it’s a necessity. To truly excel, businesses must focus on <strong>identifying and addressing customer needs</strong> effectively. This blog post will delve into the essential steps for enhancing customer service by understanding what customers value in their interactions with your organization.</p>
-
-
-
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img fetchpriority="high" decoding="async" width="1024" height="341" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-1024x341.jpg" alt="" class="wp-image-3160" srcset="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-1024x341.jpg 1024w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-980x327.jpg 980w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-480x160.jpg 480w" sizes="(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) and (max-width: 980px) 980px, (min-width: 981px) 1024px, 100vw"></a></figure>
+<p>In today's competitive market, exceptional customer service is not just an option; it's a necessity. To truly excel, businesses must focus on <strong>identifying and addressing customer needs</strong> effectively. This blog post will delve into the essential steps for enhancing customer service by understanding what customers value in their interactions with your organization.</p>
 
 
 
@@ -4936,11 +4899,7 @@ HTML3494a04f,
 
 
 
-<p>Once you have clarity on what needs change, it’s time to shift your thoughts actively. A powerful reminder is that “everything you have is within you.” You possess the inherent ability to alter your reality through conscious thought. <strong>Choose not to remain a victim of circumstance</strong>; instead, recognize that your input shapes your experiences.</p>
-
-
-
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img loading="lazy" decoding="async" width="1024" height="341" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-1024x341.jpg" alt="" class="wp-image-3160" srcset="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-1024x341.jpg 1024w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-980x327.jpg 980w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-480x160.jpg 480w" sizes="(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) and (max-width: 980px) 980px, (min-width: 981px) 1024px, 100vw"></a></figure>
+<p>Once you have clarity on what needs change, it's time to shift your thoughts actively. A powerful reminder is that "everything you have is within you." You possess the inherent ability to alter your reality through conscious thought. <strong>Choose not to remain a victim of circumstance</strong>; instead, recognize that your input shapes your experiences.</p>
 
 
 
@@ -5097,10 +5056,6 @@ HTMLb8404000,
 
 
 <p>Another example is Oprah Winfrey, who overcame a challenging childhood marked by poverty and abuse to become one of the most influential media figures globally. Her journey exemplifies the power of resilience and inspiration in effecting change.</p>
-
-
-
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img loading="lazy" decoding="async" width="1024" height="341" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria6-1024x341.jpg" alt="Modern shared office space at The Success Academy with entrepreneurs collaborating" class="wp-image-3143" srcset="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria6-1024x341.jpg 1024w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria6-980x327.jpg 980w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria6-480x160.jpg 480w" sizes="(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) and (max-width: 980px) 980px, (min-width: 981px) 1024px, 100vw"></a><figcaption class="wp-element-caption">The Success Academy offers professional office space and a collaborative environment for business growth.</figcaption></figure>
 
 
 
@@ -5555,12 +5510,8 @@ HTML2c506d4d,
 
 
 
-<li><strong>Offer Personalized Demos or Trials:</strong> Instead of generic pitches, provide demos or trials customized to the prospect’s company or role. This hands-on experience can motivate prospects to engage.</li>
+<li><strong>Offer Personalized Demos or Trials:</strong> Instead of generic pitches, provide demos or trials customized to the prospect's company or role. This hands-on experience can motivate prospects to engage.</li>
 </ul>
-
-
-
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img loading="lazy" decoding="async" width="1024" height="341" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-1024x341.jpg" alt="" class="wp-image-3160" srcset="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-1024x341.jpg 1024w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-980x327.jpg 980w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria2-480x160.jpg 480w" sizes="(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) and (max-width: 980px) 980px, (min-width: 981px) 1024px, 100vw"></a></figure>
 
 
 
@@ -5826,11 +5777,7 @@ HTML6aa30c0f,
 
 
 
-<p>“Hi Sue, my name is Eberhard from The Strengths Toolbox. Our mutual colleague, Charl Du Toit, mentioned you might benefit from our sales training. I’d love to share how we helped them achieve a 30% increase in sales. Do you have 20 minutes to chat?”</p>
-
-
-
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img loading="lazy" decoding="async" width="1024" height="341" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria6-1024x341.jpg" alt="Modern shared office space at The Success Academy with entrepreneurs collaborating" class="wp-image-3143" srcset="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria6-1024x341.jpg 1024w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria6-980x327.jpg 980w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/05/Office-Rentals-in-Pretoria6-480x160.jpg 480w" sizes="(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) and (max-width: 980px) 980px, (min-width: 981px) 1024px, 100vw"></a><figcaption class="wp-element-caption">The Success Academy offers professional office space and a collaborative environment for business growth.</figcaption></figure>
+<p>"Hi Sue, my name is Eberhard from The Strengths Toolbox. Our mutual colleague, Charl Du Toit, mentioned you might benefit from our sales training. I'd love to share how we helped them achieve a 30% increase in sales. Do you have 20 minutes to chat?"</p>
 
 
 
@@ -6081,10 +6028,6 @@ HTML0625fe73,
 
 
 <p>Sales is a journey, not an overnight success story. Track your progress over time instead of obsessing over perfection. Are you improving your close rate or building stronger client relationships? Progress fuels motivation.</p>
-
-
-
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img decoding="async" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/03/Office-Rentals-in-Pretoria5-1024x341.jpg" alt="Modern coworking space at The Success Academy — ideal for business and mindset coaching" class="wp-image-2761"></a></figure>
 
 
 
@@ -6386,11 +6329,7 @@ HTMLad5fa502,
 
 
 
-<p><strong>Cultivate trust:</strong> Create a safe space for team members to share their strengths and aspirations without fear of judgment.</p>
-
-
-
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img decoding="async" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/03/Office-Rentals-in-Pretoria5-1024x341.jpg" alt="Modern office space at The Success Academy, showcasing professional, collaborative environments that support businesses focusing on strengths." class="wp-image-2761"></a></figure>
+<p><strong>Cultivate trust:</strong> Create a safe space for team members to share their strengths and aspirations without fear of judgment.</p>
 
 
 
@@ -6586,11 +6525,7 @@ HTMLc60929b3,
 
 
 
-<p>A strengths-focused environment makes employees feel valued and understood. When managers assign roles that match each person’s strengths, job satisfaction rises and turnover drops. This sense of belonging and purpose translates into higher engagement and a more stable, committed workforce.</p>
-
-
-
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img decoding="async" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/03/Office-Rentals-in-Pretoria5-1024x341.jpg" alt="Modern office space at The Success Academy, showcasing professional, collaborative environments that support businesses focusing on strengths." class="wp-image-2761"></a></figure>
+<p>A strengths-focused environment makes employees feel valued and understood. When managers assign roles that match each person's strengths, job satisfaction rises and turnover drops. This sense of belonging and purpose translates into higher engagement and a more stable, committed workforce.</p>
 
 
 
@@ -6760,11 +6695,7 @@ HTML78ec8f94,
 
 
 
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img decoding="async" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/03/Office-Rentals-in-Pretoria5-1024x341.jpg" alt="" class="wp-image-2761"></a></figure>
-
-
-
-<h4 class="wp-block-heading">4. Seek Support and Feedback</h4>
+<h4 class="wp-block-heading">4. Seek Support and Feedback</h4>
 
 
 
@@ -6934,11 +6865,7 @@ HTMLb7ae3d45,
 
 
 
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img decoding="async" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/03/Office-Rentals-in-Pretoria9-1024x341.jpg" alt="" class="wp-image-2753"></a></figure>
-
-
-
-<h3 class="wp-block-heading">3. Leverage Multiple Sales Channels</h3>
+<h3 class="wp-block-heading">3. Leverage Multiple Sales Channels</h3>
 
 
 
@@ -7162,11 +7089,7 @@ HTML26f58231,
 
 
 
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img fetchpriority="high" decoding="async" width="1024" height="341" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/03/Office-Rentals-in-Pretoria1-1024x341.jpg" alt="" class="wp-image-2747" srcset="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/03/Office-Rentals-in-Pretoria1-1024x341.jpg 1024w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/03/Office-Rentals-in-Pretoria1-980x327.jpg 980w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/03/Office-Rentals-in-Pretoria1-480x160.jpg 480w" sizes="(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) and (max-width: 980px) 980px, (min-width: 981px) 1024px, 100vw"></a></figure>
-
-
-
-<h3 class="wp-block-heading">4. Build Rapport and Trust</h3>
+<h3 class="wp-block-heading">4. Build Rapport and Trust</h3>
 
 
 
@@ -7531,12 +7454,8 @@ HTML0bb1f74c,
 
 
 
-<li><strong>Improved Resilience</strong>: Life’s challenges become more manageable when approached with an inspired mindset.</li>
+<li><strong>Improved Resilience</strong>: Life's challenges become more manageable when approached with an inspired mindset.</li>
 </ul>
-
-
-
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img decoding="async" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/02/Office-Rentals-in-Pretoria3-1-1024x341.jpg" alt="" class="wp-image-2451"></a></figure>
 
 
 
@@ -7654,11 +7573,7 @@ HTML2f54710e,
 
 
 
-<p>To create the life you desire, <strong>choose to do things differently</strong>. Start by consciously selecting thoughts that align with your goals and aspirations. This practice not only enhances your perception but also influences how others perceive and interact with you.</p>
-
-
-
-<figure class="wp-block-image size-large"><img loading="lazy" decoding="async" width="1024" height="341" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/02/Office-Rentals-in-Pretoria2-1024x341.webp" alt="" class="wp-image-2446" srcset="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/02/Office-Rentals-in-Pretoria2-1024x341.webp 1024w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/02/Office-Rentals-in-Pretoria2-980x327.webp 980w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/02/Office-Rentals-in-Pretoria2-480x160.webp 480w" sizes="(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) and (max-width: 980px) 980px, (min-width: 981px) 1024px, 100vw"></figure>
+<p>To create the life you desire, <strong>choose to do things differently</strong>. Start by consciously selecting thoughts that align with your goals and aspirations. This practice not only enhances your perception but also influences how others perceive and interact with you.</p>
 
 
 
@@ -7895,10 +7810,6 @@ HTML72e3e3ae,
 
 
 <p>The journey to improving customer service begins with understanding what customers want and need. While businesses often invest in surveys to gather feedback, invaluable insights can also be gleaned from the front-line employees who interact with customers daily. These employees can observe and listen to customers, gaining a deeper understanding of their needs.Once you have identified these needs, the next step is to commit to meeting them. However, providing exceptional service requires going beyond mere compliance; it involves demonstrating to customers that they are valued.</p>
-
-
-
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img decoding="async" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/02/Office-Rentals-in-Pretoria1-1024x341.jpg" alt="" class="wp-image-2050"></a></figure>
 
 
 
@@ -8171,10 +8082,6 @@ HTML7911ed4a,
 
 
 <p>A friendly demeanor can significantly impact customer experience. A simple smile can convey warmth and make customers feel valued, encouraging them to return and even refer others to your business. Smiling not only enhances customer interactions but also boosts your own mood.</p>
-
-
-
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img loading="lazy" decoding="async" width="1024" height="341" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/02/Office-Rentals-in-Pretoria3-1024x341.webp" alt="" class="wp-image-2131" srcset="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/02/Office-Rentals-in-Pretoria3-1024x341.webp 1024w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/02/Office-Rentals-in-Pretoria3-980x327.webp 980w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/02/Office-Rentals-in-Pretoria3-480x160.webp 480w" sizes="(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) and (max-width: 980px) 980px, (min-width: 981px) 1024px, 100vw"></a></figure>
 
 
 
@@ -8516,10 +8423,6 @@ HTML83c883ed,
 
 
 
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img decoding="async" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/02/Office-Rentals-in-Pretoria6-1024x341.jpg" alt="" class="wp-image-2046"></a></figure>
-
-
-
 <h2 class="wp-block-heading"><strong>Striving for Balance in Emotional Intelligence</strong></h2>
 
 
@@ -8691,10 +8594,6 @@ HTML81a3112b,
 
 <li><strong>Positive Thinking:</strong> Shift your focus to uplifting thoughts, helping you approach challenges constructively.</li>
 </ol>
-
-
-
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img decoding="async" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/02/Office-Rentals-in-Pretoria10-1024x341.jpg" alt="" class="wp-image-2036"></a></figure>
 
 
 
@@ -9152,11 +9051,7 @@ HTML4708252b,
 
 
 
-<p>Empathy is the ability to understand and share the feelings of others. It begins with recognizing your own emotions and extends to understanding those of colleagues. Empathy fosters stronger connections and enhances teamwork by allowing individuals to respond appropriately to others’ needs. Developing empathy strengthens relationships and contributes to a more positive work environment.</p>
-
-
-
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img decoding="async" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/02/Office-Rentals-in-Pretoria9-1024x341.jpg" alt="" class="wp-image-2018"></a></figure>
+<p>Empathy is the ability to understand and share the feelings of others. It begins with recognizing your own emotions and extends to understanding those of colleagues. Empathy fosters stronger connections and enhances teamwork by allowing individuals to respond appropriately to others' needs. Developing empathy strengthens relationships and contributes to a more positive work environment.</p>
 
 
 
@@ -9285,10 +9180,6 @@ HTML7132b10f,
 
 
 <p>By implementing these tips and maintaining a commitment to excellent service, you can create lasting relationships with your customers and drive success for your business.</p>
-
-
-
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img fetchpriority="high" decoding="async" width="1024" height="341" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/01/Office-Rentals-in-Pretoria8-1024x341.webp" alt="Smiling customer service representative assisting a happy customer in a professional setting." class="wp-image-2007" srcset="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/01/Office-Rentals-in-Pretoria8-1024x341.webp 1024w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/01/Office-Rentals-in-Pretoria8-980x327.webp 980w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/01/Office-Rentals-in-Pretoria8-480x160.webp 480w" sizes="(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) and (max-width: 980px) 980px, (min-width: 981px) 1024px, 100vw"></a></figure>
 
 
 
@@ -9500,10 +9391,6 @@ HTMLdb9c4d25,
 
 
 
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img loading="lazy" decoding="async" width="1024" height="341" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/01/Office-Rentals-in-Pretoria3-1024x341.webp" alt="" class="wp-image-1520" srcset="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/01/Office-Rentals-in-Pretoria3-1024x341.webp 1024w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/01/Office-Rentals-in-Pretoria3-980x327.webp 980w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/01/Office-Rentals-in-Pretoria3-480x160.webp 480w" sizes="(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) and (max-width: 980px) 980px, (min-width: 981px) 1024px, 100vw"></a></figure>
-
-
-
 <h2 class="wp-block-heading">Conclusion</h2>
 
 
@@ -9595,10 +9482,6 @@ HTMLf869f6ea,
 
 
 <p>It dawned on me that I had perhaps not been aware of my own unique talents and strengths which others appreciated. This is often the case, since our innate talents are such a natural part of us, that we do not recognise them for what they are. It is easier for other people to spot them, and consequently to admire them.</p>
-
-
-
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img loading="lazy" decoding="async" width="1024" height="341" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/01/Office-Rentals-in-Pretoria9-1024x341.webp" alt="" class="wp-image-1451" srcset="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/01/Office-Rentals-in-Pretoria9-1024x341.webp 1024w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/01/Office-Rentals-in-Pretoria9-980x327.webp 980w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/01/Office-Rentals-in-Pretoria9-480x160.webp 480w" sizes="(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) and (max-width: 980px) 980px, (min-width: 981px) 1024px, 100vw"></a></figure>
 
 
 
@@ -9830,10 +9713,6 @@ HTML756095fe,
 
 
 
-<figure class="wp-block-image size-large"><a href="https://tsabusinessschool.co.za/"><img fetchpriority="high" decoding="async" width="1024" height="341" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/01/TSA-Business-School-1024x341.webp" alt="" class="wp-image-1444" srcset="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/01/TSA-Business-School-1024x341.webp 1024w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/01/TSA-Business-School-980x327.webp 980w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/01/TSA-Business-School-480x160.webp 480w" sizes="(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) and (max-width: 980px) 980px, (min-width: 981px) 1024px, 100vw"></a></figure>
-
-
-
 <h2 class="wp-block-heading">Avoiding Distractions</h2>
 
 
@@ -9870,9 +9749,6 @@ HTML756095fe,
 
 
 
-<figure class="wp-block-gallery has-nested-images columns-default is-cropped wp-block-gallery-1 is-layout-flex wp-block-gallery-is-layout-flex">
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img loading="lazy" decoding="async" width="1024" height="341" data-id="1447" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/01/Office-Rentals-in-Pretoria1-1024x341.webp" alt="" class="wp-image-1447" srcset="https://www.tsabusinessschool.co.za/wp-content/uploads/2025/01/Office-Rentals-in-Pretoria1-1024x341.webp 1024w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/01/Office-Rentals-in-Pretoria1-980x327.webp 980w, https://www.tsabusinessschool.co.za/wp-content/uploads/2025/01/Office-Rentals-in-Pretoria1-480x160.webp 480w" sizes="(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) and (max-width: 980px) 980px, (min-width: 981px) 1024px, 100vw"></a></figure>
-</figure>
 
 
 
@@ -10062,10 +9938,6 @@ HTML79874a5c,
 
 
 
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img loading="lazy" decoding="async" width="1024" height="341" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2024/12/Office-Rentals-in-Pretoria3-1-1024x341.webp" alt="The success Academy " class="wp-image-1425" srcset="https://www.tsabusinessschool.co.za/wp-content/uploads/2024/12/Office-Rentals-in-Pretoria3-1-1024x341.webp 1024w, https://www.tsabusinessschool.co.za/wp-content/uploads/2024/12/Office-Rentals-in-Pretoria3-1-980x327.webp 980w, https://www.tsabusinessschool.co.za/wp-content/uploads/2024/12/Office-Rentals-in-Pretoria3-1-480x160.webp 480w" sizes="(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) and (max-width: 980px) 980px, (min-width: 981px) 1024px, 100vw"></a></figure>
-
-
-
 <h2 class="wp-block-heading">Adding Value at Every Touchpoint</h2>
 
 
@@ -10158,11 +10030,7 @@ HTMLdd857b3f,
 
 
 
-<p>To effectively attract prospects and customers, it’s essential to cultivate an appealing personality that fosters trust and rapport. This means genuinely liking people and showing a sincere interest in them. Building these connections requires continuous personal growth and development.  </p>
-
-
-
-<figure class="wp-block-image size-large"><a href="https://tsabusinessschool.co.za/"><img fetchpriority="high" decoding="async" width="1024" height="341" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2024/12/TSA-Business-School-1024x341.webp" alt="" class="wp-image-1392" srcset="https://www.tsabusinessschool.co.za/wp-content/uploads/2024/12/TSA-Business-School-1024x341.webp 1024w, https://www.tsabusinessschool.co.za/wp-content/uploads/2024/12/TSA-Business-School-980x327.webp 980w, https://www.tsabusinessschool.co.za/wp-content/uploads/2024/12/TSA-Business-School-480x160.webp 480w" sizes="(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) and (max-width: 980px) 980px, (min-width: 981px) 1024px, 100vw"></a></figure>
+<p>To effectively attract prospects and customers, it's essential to cultivate an appealing personality that fosters trust and rapport. This means genuinely liking people and showing a sincere interest in them. Building these connections requires continuous personal growth and development.  </p>
 
 
 
@@ -10195,10 +10063,6 @@ HTMLdd857b3f,
 
 
 <p>Regular self-assessment is vital for personal growth and improving how we connect with others. Ask yourself: Would you want to be friends with yourself? Identifying areas for improvement can help enhance your attractiveness as a person and leader. Maxwell suggests focusing on developing traits such as charisma, communication skills, and the ability to uplift others. When you prioritize helping others achieve their goals, you naturally attract what you desire in return—be it business opportunities or deeper connections. </p>
-
-
-
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img loading="lazy" decoding="async" width="1024" height="341" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2024/12/Office-Rentals-in-Pretoria10-1024x341.webp" alt="Modern office space for rent with open-plan layout, large windows, ergonomic furniture, and sleek design. The workspace features high-speed internet, meeting rooms, and bright, inviting interiors perfect for businesses and startups." class="wp-image-1394" srcset="https://www.tsabusinessschool.co.za/wp-content/uploads/2024/12/Office-Rentals-in-Pretoria10-1024x341.webp 1024w, https://www.tsabusinessschool.co.za/wp-content/uploads/2024/12/Office-Rentals-in-Pretoria10-980x327.webp 980w, https://www.tsabusinessschool.co.za/wp-content/uploads/2024/12/Office-Rentals-in-Pretoria10-480x160.webp 480w" sizes="(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) and (max-width: 980px) 980px, (min-width: 981px) 1024px, 100vw"></a><figcaption class="wp-element-caption">Perfect Office Space for your Business </figcaption></figure>
 
 
 
@@ -10290,11 +10154,7 @@ HTMLd255da17,
 
 
 
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img fetchpriority="high" decoding="async" width="1024" height="341" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2024/12/Office-Rentals-in-Pretoria2-1024x341.webp" alt="Step into a workspace designed for achievement! Explore Options today at TSA and find your new professional home!" class="wp-image-1396" srcset="https://www.tsabusinessschool.co.za/wp-content/uploads/2024/12/Office-Rentals-in-Pretoria2-1024x341.webp 1024w, https://www.tsabusinessschool.co.za/wp-content/uploads/2024/12/Office-Rentals-in-Pretoria2-980x327.webp 980w, https://www.tsabusinessschool.co.za/wp-content/uploads/2024/12/Office-Rentals-in-Pretoria2-480x160.webp 480w" sizes="(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) and (max-width: 980px) 980px, (min-width: 981px) 1024px, 100vw"></a><figcaption class="wp-element-caption">The Success Academy Where you can feel at Home!</figcaption></figure>
-
-
-
-<h2 class="wp-block-heading">Identifying the Strengths of the Salesperson: </h2>
+<h2 class="wp-block-heading">Identifying the Strengths of the Salesperson: </h2>
 
 
 
@@ -10331,10 +10191,6 @@ HTMLd255da17,
 
 
 <p></p>
-
-
-
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img loading="lazy" decoding="async" width="1024" height="341" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2024/12/Office-Rentals-in-Pretoria3-1024x341.webp" alt="Refer a potential tenant at TSA and get rewarded with R15000 when they sign up!" class="wp-image-1397" srcset="https://www.tsabusinessschool.co.za/wp-content/uploads/2024/12/Office-Rentals-in-Pretoria3-1024x341.webp 1024w, https://www.tsabusinessschool.co.za/wp-content/uploads/2024/12/Office-Rentals-in-Pretoria3-980x327.webp 980w, https://www.tsabusinessschool.co.za/wp-content/uploads/2024/12/Office-Rentals-in-Pretoria3-480x160.webp 480w" sizes="(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) and (max-width: 980px) 980px, (min-width: 981px) 1024px, 100vw"></a><figcaption class="wp-element-caption">Potential Tenants </figcaption></figure>
 
 
 
@@ -10389,10 +10245,6 @@ HTMLd255da17,
 
 
 <p>Finally, strengths-based selling can provide a competitive advantage. By creating a more personalized and engaging sales experience, strengths-based selling can differentiate a business from its competitors. This can lead to increased customer loyalty and market share, as well as improved sales and revenue.</p>
-
-
-
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img decoding="async" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2024/12/Office-Rentals-in-Pretoria1-1024x341.jpg" alt="Office Space That works for you-Flexible Options available!" class="wp-image-1398"></a><figcaption class="wp-element-caption">The Success Academy</figcaption></figure>
 
 
 
@@ -10498,10 +10350,6 @@ HTML7cdc3558,
 
 
 
-<figure class="wp-block-image size-large"><a href="https://thesuccessacademy.co.za/"><img loading="lazy" decoding="async" width="1024" height="341" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2024/12/Office-Rentals-in-Pretoria4-1024x341.webp" alt="Looking for an office that feels like home, where you can grow and connect with like-minded businesses." class="wp-image-1402" srcset="https://www.tsabusinessschool.co.za/wp-content/uploads/2024/12/Office-Rentals-in-Pretoria4-1024x341.webp 1024w, https://www.tsabusinessschool.co.za/wp-content/uploads/2024/12/Office-Rentals-in-Pretoria4-980x327.webp 980w, https://www.tsabusinessschool.co.za/wp-content/uploads/2024/12/Office-Rentals-in-Pretoria4-480x160.webp 480w" sizes="(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) and (max-width: 980px) 980px, (min-width: 981px) 1024px, 100vw"></a><figcaption class="wp-element-caption">Looking For Office Space The Success Academy is the BEST Choice for you.</figcaption></figure>
-
-
-
 <h2 class="wp-block-heading">Taking Control of Your Life</h2>
 
 
@@ -10597,10 +10445,6 @@ HTML7cdc3558,
 
 
 <p></p>
-
-
-
-<figure class="wp-block-image size-large"><a href="https://tsabusinessschool.co.za/"><img loading="lazy" decoding="async" width="1024" height="341" src="https://www.tsabusinessschool.co.za/wp-content/uploads/2024/12/TSA-Business-School-1-1024x341.webp" alt="At The Strengths Toolbox, we are passionate about helping individual and business realize their unique strengths and talents." class="wp-image-1403" srcset="https://www.tsabusinessschool.co.za/wp-content/uploads/2024/12/TSA-Business-School-1-1024x341.webp 1024w, https://www.tsabusinessschool.co.za/wp-content/uploads/2024/12/TSA-Business-School-1-980x327.webp 980w, https://www.tsabusinessschool.co.za/wp-content/uploads/2024/12/TSA-Business-School-1-480x160.webp 480w" sizes="(min-width: 0px) and (max-width: 480px) 480px, (min-width: 481px) and (max-width: 980px) 980px, (min-width: 981px) 1024px, 100vw"></a><figcaption class="wp-element-caption">We Empower you to be passionate about helping individuals.</figcaption></figure>
 
 
 

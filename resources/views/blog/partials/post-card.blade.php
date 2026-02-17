@@ -2,7 +2,7 @@
     @if($post->featured_image)
         <a href="{{ route('blog.show', $post->slug) }}" class="block">
             <img
-                src="{{ asset('storage/' . $post->featured_image) }}"
+                src="{{ $post->featured_image_url }}"
                 alt="{{ $post->title }}"
                 class="w-full h-48 object-cover"
                 loading="lazy"

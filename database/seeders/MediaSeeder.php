@@ -89,11 +89,11 @@ class MediaSeeder extends Seeder
         $this->command->info('Uploading blog images to media library...');
         $this->command->newLine();
 
-        $blogPath = storage_path('app/public/blog');
+        $blogPath = public_path('images/blog');
 
         if (! is_dir($blogPath)) {
             $this->command->warn("Blog images directory not found: {$blogPath}");
-            $this->command->warn('Skipping blog image upload. Run: php artisan blog:download-media');
+            $this->command->warn('Skipping blog image upload. Images should be in public/images/blog/');
 
             return;
         }
@@ -144,14 +144,14 @@ class MediaSeeder extends Seeder
         $user = User::first();
         $this->userId = $user ? $user->id : null;
 
-        // Upload blog images from storage/app/public/blog
+        // Upload blog images from public/images/blog
         $this->uploadBlogImages();
 
-        $path = base_path('content-migration/images/optimized');
+        $path = public_path('images/blog');
 
         if (! is_dir($path)) {
-            $this->command->warn("Optimized images directory not found: {$path}");
-            $this->command->warn('Skipping image upload. Run: php artisan images:upload-migrated');
+            $this->command->warn("Blog images directory not found: {$path}");
+            $this->command->warn('Skipping image upload. Images should be in public/images/blog/');
 
             return;
         }
@@ -260,76 +260,45 @@ class MediaSeeder extends Seeder
 
     protected function determineDirectory(string $imagePath): string
     {
-        // Extract directory from path, removing strengthstoolbox/tsa prefixes
-        // Example: content-migration/images/optimized/tsa/homepage/hero/image.webp
-        // Should become: media/homepage/hero
+        // Extract directory from path
+        // Example: public/images/blog/image.webp -> media/blog
+        // Example: public/images/blog/subfolder/image.webp -> media/blog/subfolder
 
-        $basePath = base_path('content-migration/images/optimized/');
-        $relativePath = str_replace($basePath, '', $imagePath);
-        $directory = dirname($relativePath);
-
-        // Handle root level images (no subdirectory)
-        if ($directory === '.') {
-            return 'media';
+        $basePath = public_path('images/blog');
+        if (str_starts_with($imagePath, $basePath)) {
+            $relativePath = str_replace($basePath, '', $imagePath);
+            $directory = dirname($relativePath);
+            
+            // Handle root level images (no subdirectory)
+            if ($directory === '.' || $directory === '') {
+                return 'media/blog';
+            }
+            
+            // Remove leading slash
+            $directory = ltrim($directory, '/');
+            
+            return 'media/blog/'.$directory;
         }
 
-        // Remove strengthstoolbox/ and tsa/ prefixes from the directory path
-        $directory = preg_replace('#^(strengthstoolbox|tsa)/#', '', $directory);
-
-        // If directory is now empty or just '.', return 'media'
-        if ($directory === '' || $directory === '.') {
-            return 'media';
-        }
-
-        return 'media/'.$directory;
+        // Fallback for other paths
+        return 'media';
     }
 
     protected function getAltText(string $imagePath): ?string
     {
-        // Try to get alt text from image mapping file
-        $mappingFile = base_path('content-migration/images/image-mapping.json');
-
-        if (file_exists($mappingFile)) {
-            $mapping = json_decode(file_get_contents($mappingFile), true);
-            $filename = basename($imagePath);
-
-            // Search mapping for this image
-            if (isset($mapping['images'])) {
-                foreach ($mapping['images'] as $path => $data) {
-                    if (isset($data['new_filename']) && $data['new_filename'] === $filename) {
-                        return $data['alt_text'] ?? null;
-                    }
-                }
-            }
-        }
-
         // Generate default alt text from filename
+        // In production, alt text can be enhanced from metadata if needed
         $filename = basename($imagePath, '.webp');
         $filename = basename($filename, '.jpg');
         $filename = basename($filename, '.png');
+        $filename = basename($filename, '.gif');
 
         return Str::title(str_replace(['-', '_'], ' ', $filename));
     }
 
     protected function getDescription(string $imagePath): ?string
     {
-        // Try to get description from image mapping file
-        $mappingFile = base_path('content-migration/images/image-mapping.json');
-
-        if (file_exists($mappingFile)) {
-            $mapping = json_decode(file_get_contents($mappingFile), true);
-            $filename = basename($imagePath);
-
-            // Search mapping for this image
-            if (isset($mapping['images'])) {
-                foreach ($mapping['images'] as $path => $data) {
-                    if (isset($data['new_filename']) && $data['new_filename'] === $filename) {
-                        return $data['description'] ?? null;
-                    }
-                }
-            }
-        }
-
+        // In production, description can be loaded from metadata if available
         return null;
     }
 
@@ -338,21 +307,9 @@ class MediaSeeder extends Seeder
         $this->command->newLine();
         $this->command->info('Assigning featured images to blog posts...');
 
-        $mappingPath = base_path('content-migration/images/image-mapping.json');
-
-        if (! file_exists($mappingPath)) {
-            $this->command->warn('Image mapping file not found. Skipping blog post image assignment.');
-
-            return;
-        }
-
-        $mapping = json_decode(file_get_contents($mappingPath), true);
-
-        if (! isset($mapping['images'])) {
-            $this->command->warn('Invalid mapping file structure. Skipping blog post image assignment.');
-
-            return;
-        }
+        // In production, blog post images are primarily assigned via BlogSeeder
+        // This method attempts to match remaining images by filename patterns
+        $this->command->line('  Note: Blog post images are primarily assigned via BlogSeeder');
 
         $assigned = 0;
         $skipped = 0;
@@ -360,60 +317,7 @@ class MediaSeeder extends Seeder
 
         $blogPosts = BlogPost::all();
 
-        foreach ($mapping['images'] as $originalPath => $imageData) {
-            // Check if this image is for a blog post
-            if (! isset($imageData['blog_post_slug'])) {
-                continue;
-            }
-
-            $blogPostSlug = $imageData['blog_post_slug'];
-            $newFilename = $imageData['new_filename'] ?? null;
-
-            if (! $newFilename) {
-                $skipped++;
-
-                continue;
-            }
-
-            // Find blog post
-            $blogPost = $blogPosts->firstWhere('slug', $blogPostSlug);
-
-            if (! $blogPost) {
-                $skipped++;
-
-                continue;
-            }
-
-            // Find media by filename
-            $media = Media::where('filename', 'like', '%'.pathinfo($newFilename, PATHINFO_FILENAME).'%')
-                ->orWhere('original_filename', 'like', '%'.pathinfo($newFilename, PATHINFO_FILENAME).'%')
-                ->first();
-
-            if (! $media) {
-                $skipped++;
-
-                continue;
-            }
-
-            // Check if already assigned
-            if ($blogPost->featured_image && $blogPost->featured_image === $media->path) {
-                $skipped++;
-
-                continue;
-            }
-
-            try {
-                $blogPost->featured_image = $media->path;
-                $blogPost->save();
-                $assigned++;
-                $this->command->line("  ✓ Assigned: {$media->filename} → {$blogPost->title}");
-            } catch (\Exception $e) {
-                $errors++;
-                $this->command->error("  ✗ Error assigning image to {$blogPost->title}: ".$e->getMessage());
-            }
-        }
-
-        // Also try to match by filename patterns if no explicit mapping
+        // Try to match by filename patterns
         foreach ($blogPosts as $post) {
             if ($post->featured_image) {
                 continue; // Already has image
@@ -421,6 +325,7 @@ class MediaSeeder extends Seeder
 
             // Try to find image by slug or title keywords
             $searchTerms = [
+                Str::slug($post->slug),
                 Str::slug($post->title),
                 Str::slug(Str::words($post->title, 3, '')),
             ];

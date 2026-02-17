@@ -7,6 +7,7 @@
 @section('content')
     @include('partials.pages.strengths-programme.hero')
     @include('partials.pages.strengths-programme.what-strengths-matter')
+    @include('partials.pages.strengths-programme.cliftonstrengths')
     @include('partials.pages.strengths-programme.four-programs')
     @include('partials.pages.strengths-programme.cta')
     @include('partials.pages.strengths-programme.faq')

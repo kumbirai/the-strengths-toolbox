@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\BlogPost;
+use App\Services\BlogImageService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
@@ -13,7 +14,15 @@ class AssignBlogImagesFromFolder extends Command
 {
     protected $signature = 'blog:assign-images-from-folder {--dry-run : Preview without making changes}';
 
-    protected $description = 'Assign featured images to blog posts by matching slugs with files in storage/app/public/blog/';
+    protected $description = 'Assign featured images to blog posts by matching slugs with files in public/images/blog/';
+
+    protected BlogImageService $blogImageService;
+
+    public function __construct(BlogImageService $blogImageService)
+    {
+        parent::__construct();
+        $this->blogImageService = $blogImageService;
+    }
 
     public function handle(): int
     {
@@ -25,7 +34,7 @@ class AssignBlogImagesFromFolder extends Command
         }
         $this->newLine();
 
-        $blogFolder = storage_path('app/public/blog');
+        $blogFolder = public_path('images/blog');
         if (! File::exists($blogFolder)) {
             $this->error("Blog folder not found: {$blogFolder}");
 
@@ -41,7 +50,7 @@ class AssignBlogImagesFromFolder extends Command
             // Extract slug from filename (e.g., "blog-harnessing-your-unique-strengths.webp" -> "harnessing-your-unique-strengths")
             if (preg_match('/^blog-(.+)\.(jpg|jpeg|png|webp|gif)$/i', $filename, $matches)) {
                 $slug = $matches[1];
-                $imageMap[$slug] = 'blog/'.$filename;
+                $imageMap[$slug] = 'images/blog/'.$filename;
             }
         }
 
@@ -57,7 +66,8 @@ class AssignBlogImagesFromFolder extends Command
         foreach ($blogPosts as $post) {
             // Skip if already has an image that exists
             if ($post->featured_image) {
-                $filePath = storage_path('app/public/'.$post->featured_image);
+                $normalizedPath = $this->blogImageService->getStandardPath($post->featured_image);
+                $filePath = public_path($normalizedPath);
                 if (file_exists($filePath)) {
                     $skipped++;
                     continue;
@@ -66,25 +76,28 @@ class AssignBlogImagesFromFolder extends Command
                 }
             }
 
-            // Try to find matching image by slug
+            // Try to find matching image by slug using BlogImageService
             $slug = $post->slug;
-            $imagePath = null;
+            $imagePath = $this->blogImageService->findBySlug($slug);
 
-            // Direct slug match
-            if (isset($imageMap[$slug])) {
-                $imagePath = $imageMap[$slug];
-            } else {
-                // Try partial matches
-                foreach ($imageMap as $imageSlug => $path) {
-                    if (str_contains($slug, $imageSlug) || str_contains($imageSlug, $slug)) {
-                        $imagePath = $path;
-                        break;
+            // If not found by exact slug, try partial matches from imageMap
+            if (!$imagePath) {
+                // Direct slug match
+                if (isset($imageMap[$slug])) {
+                    $imagePath = $imageMap[$slug];
+                } else {
+                    // Try partial matches
+                    foreach ($imageMap as $imageSlug => $path) {
+                        if (str_contains($slug, $imageSlug) || str_contains($imageSlug, $slug)) {
+                            $imagePath = $path;
+                            break;
+                        }
                     }
                 }
             }
 
             if ($imagePath) {
-                $filePath = storage_path('app/public/'.$imagePath);
+                $filePath = public_path($imagePath);
                 if (file_exists($filePath)) {
                     if ($dryRun) {
                         $this->line("  Would assign: {$imagePath} → {$post->title}");
@@ -149,7 +162,11 @@ class AssignBlogImagesFromFolder extends Command
                         $ext = pathinfo(parse_url($imageUrl, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'jpg';
                         $ext = strtolower($ext) === 'jpeg' ? 'jpg' : strtolower($ext);
                         $filename = 'blog-'.preg_replace('/[^a-z0-9-]/', '-', strtolower($slug)).'.'.$ext;
-                        $relativePath = 'blog/'.$filename;
+                        $relativePath = 'images/blog/'.$filename;
+                        $fullPath = public_path($relativePath);
+
+                        // Ensure directory exists
+                        File::ensureDirectoryExists(public_path('images/blog'));
 
                         if ($dryRun) {
                             $this->line("  Would download: {$imageUrl}");
@@ -158,7 +175,7 @@ class AssignBlogImagesFromFolder extends Command
                             try {
                                 $response = Http::timeout(30)->get($imageUrl);
                                 if ($response->successful()) {
-                                    $disk->put($relativePath, $response->body());
+                                    File::put($fullPath, $response->body());
                                     $post->featured_image = $relativePath;
                                     $post->save();
                                     $this->line("  ✓ Downloaded and assigned: {$relativePath} → {$title}");

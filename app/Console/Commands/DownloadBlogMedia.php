@@ -17,7 +17,7 @@ class DownloadBlogMedia extends Command
 {
     protected $signature = 'blog:download-media
                             {--inventory=content-migration/scraped-blogs.json : Path to scraped inventory JSON}
-                            {--output-dir=storage/app/public/blog : Output directory for images}
+                            {--output-dir=public/images/blog : Output directory for images}
                             {--delay=1 : Seconds to wait between HTTP requests}
                             {--dry-run : Preview without downloading}
                             {--cleanup-only : Only clean up duplicates, do not download}';

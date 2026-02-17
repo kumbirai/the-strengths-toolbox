@@ -45,6 +45,7 @@ class DownloadSalesCoursesImages extends Command
         }
 
         $downloaded = 0;
+        $skipped = 0;
         $errors = 0;
 
         foreach ($this->images as $sourcePath => $localFilename) {
@@ -55,6 +56,13 @@ class DownloadSalesCoursesImages extends Command
                 $this->line("  Would download: {$url} → {$relativePath}");
                 $downloaded++;
 
+                continue;
+            }
+
+            // Check if file already exists
+            if ($disk->exists($relativePath)) {
+                $this->line("  ⊘ Skipped (already exists): {$localFilename}");
+                $skipped++;
                 continue;
             }
 
@@ -79,6 +87,9 @@ class DownloadSalesCoursesImages extends Command
 
         $this->newLine();
         $this->info("Downloaded: {$downloaded}");
+        if ($skipped > 0) {
+            $this->line("Skipped (already exists): {$skipped}");
+        }
         if ($errors > 0) {
             $this->error("Errors: {$errors}");
         }

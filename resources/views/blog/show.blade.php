@@ -67,7 +67,7 @@
         <div class="container-custom -mt-8 relative z-20">
             <div class="max-w-4xl mx-auto">
                 <img
-                    src="{{ asset('storage/' . $post->featured_image) }}"
+                    src="{{ $post->featured_image_url }}"
                     alt="{{ $post->title }}"
                     class="w-full aspect-video object-cover rounded-xl shadow-xl"
                     onerror="this.onerror=null; this.src='{{ asset('images/placeholder-blog.svg') }}'; this.alt='';"
@@ -138,9 +138,15 @@
     </section>
 
     {{-- Comments Section --}}
-    <section class="section-padding section-light">
+    <section class="section-padding section-muted border-t-4 border-primary-200">
         <div class="container-custom">
             <div class="max-w-4xl mx-auto">
+                {{-- Section Header --}}
+                <div class="mb-8 pb-4 border-b-2 border-neutral-200">
+                    <h2 class="text-3xl font-bold text-neutral-900 mb-2">Join the Conversation</h2>
+                    <p class="text-neutral-600">Share your thoughts and engage with the community</p>
+                </div>
+
                 @if(session('success'))
                     <div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
                         {{ session('success') }}

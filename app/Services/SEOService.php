@@ -64,13 +64,13 @@ class SEOService
                     'canonical' => url('/blog/'.$post->slug),
                     'og_title' => $post->meta_title ?? $post->title,
                     'og_description' => $post->meta_description ?? $post->excerpt ?? $this->generateDescription($post->content),
-                    'og_image' => $post->featured_image ? asset('storage/'.$post->featured_image) : config('app.og_default_image'),
+                    'og_image' => $post->featured_image_url ?? config('app.og_default_image'),
                     'og_type' => 'article',
                     'og_url' => url('/blog/'.$post->slug),
                     'twitter_card' => 'summary_large_image',
                     'twitter_title' => $post->meta_title ?? $post->title,
                     'twitter_description' => $post->meta_description ?? $post->excerpt ?? $this->generateDescription($post->content),
-                    'twitter_image' => $post->featured_image ? asset('storage/'.$post->featured_image) : config('app.og_default_image'),
+                    'twitter_image' => $post->featured_image_url ?? config('app.og_default_image'),
                     'schema' => $this->schemaService->getArticleSchema($post),
                 ];
 

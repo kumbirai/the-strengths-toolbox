@@ -147,7 +147,7 @@
                     
                     @if($post->featured_image)
                         <div class="mb-4">
-                            <img src="{{ asset('storage/' . $post->featured_image) }}" 
+                            <img src="{{ $post->featured_image_url }}" 
                                  alt="{{ $post->title }}"
                                  class="w-full rounded-lg">
                             <p class="mt-2 text-sm text-neutral-500">Current featured image</p>

@@ -30,6 +30,13 @@
                 </p>
             @endif
 
+            {{-- Gallup Badge for Strengths-Based Development Pages --}}
+            @if(str_starts_with($page->slug, 'strengths-based-development/'))
+                <div class="mt-6 flex justify-center">
+                    <x-gallup-badge size="default" />
+                </div>
+            @endif
+
             @if($pageImage)
                 <div class="mt-8 max-w-2xl mx-auto">
                     <img
@@ -48,6 +55,49 @@
 <section class="section-padding section-light">
     <div class="container-custom">
         <article class="max-w-4xl mx-auto">
+            {{-- YouTube Video for Individuals Page --}}
+            @if($page->slug === 'strengths-based-development/individuals')
+                <div class="mb-8">
+                    <div class="relative w-full" style="padding-bottom: 56.25%;">
+                        <iframe
+                            class="absolute top-0 left-0 w-full h-full rounded-xl shadow-lg"
+                            src="https://www.youtube.com/embed/M9R1uZ4MTWU"
+                            title="Strengths-Based Development for Individuals"
+                            frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowfullscreen
+                        ></iframe>
+                    </div>
+                </div>
+            @endif
+
+            {{-- Video for Managers-Leaders Page --}}
+            @if($page->slug === 'strengths-based-development/managers-leaders')
+                <div class="mb-8">
+                    @php
+                        $videoMedia = \App\Models\Media::where(function ($query) {
+                            $query->where('filename', 'like', '%unlock%potential%')
+                                ->orWhere('original_filename', 'like', '%unlock%potential%')
+                                ->orWhere('filename', 'like', '%UnlockYourPotential%');
+                        })->first();
+                        
+                        $videoPath = $videoMedia 
+                            ? asset('storage/' . $videoMedia->path)
+                            : asset('storage/media/unlock-your-potential.mp4');
+                    @endphp
+                    <div class="relative w-full bg-black rounded-xl shadow-lg overflow-hidden" style="padding-bottom: 56.25%;">
+                        <video
+                            class="absolute top-0 left-0 w-full h-full object-contain"
+                            controls
+                            preload="metadata"
+                        >
+                            <source src="{{ $videoPath }}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                </div>
+            @endif
+
             <div class="prose-content" x-data="{}" x-init="$el.querySelectorAll('img').forEach(img => { img.onerror = function() { this.style.display = 'none'; } })">
                 @php
                     $content = $page->content;
