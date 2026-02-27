@@ -222,8 +222,6 @@ class ContentReplacementService
      */
     public function removeFigureTagsWithSpecificImages(string $content): string
     {
-        // Remove figure tags containing office-rentals-in-pretoria or tsa-business-school images (case-insensitive)
-        // Pattern matches: <figure[^>]*>.*?src=.*?(office-rentals-in-pretoria|tsa-business-school).*?</figure>
         $content = preg_replace(
             '/<figure[^>]*>.*?src=.*?(office-rentals-in-pretoria|tsa-business-school).*?<\/figure>/is',
             '',
