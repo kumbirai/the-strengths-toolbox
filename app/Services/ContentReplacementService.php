@@ -20,8 +20,10 @@ class ContentReplacementService
         $content = $this->replaceUrls($content);
         $content = $this->replaceEmails($content);
         $content = $this->replaceLocalhostHrefs($content);
-        $content = $this->removeFigureTagsWithSpecificImages($content);
-        
+        $content = $this->removeFigureElements($content);
+        $content = $this->removeCommentForm($content);
+        $content = $this->removeTsacreativemarketingAnchors($content);
+
         if (! empty($imageUrlMap)) {
             $content = $this->replaceImageUrls($content, $imageUrlMap);
         }
@@ -217,13 +219,40 @@ class ContentReplacementService
     }
 
     /**
-     * Remove figure tags containing office-rentals-in-pretoria or tsa-business-school images
-     * Matches case-insensitive pattern: <figure[^>]*>.*?src=.*?(office-rentals-in-pretoria|tsa-business-school).*?</figure>
+     * Remove all <figure> elements including their inner content.
      */
-    public function removeFigureTagsWithSpecificImages(string $content): string
+    public function removeFigureElements(string $content): string
     {
         $content = preg_replace(
-            '/<figure[^>]*>.*?src=.*?(office-rentals-in-pretoria|tsa-business-school).*?<\/figure>/is',
+            '/<figure[^>]*>.*?<\/figure>/is',
+            '',
+            $content
+        );
+
+        return $content;
+    }
+
+    /**
+     * Remove the comment form block (WordPress-style div#respond and its contents).
+     */
+    public function removeCommentForm(string $content): string
+    {
+        $content = preg_replace(
+            '/<div[^>]*\bid=["\']respond["\'][^>]*>.*?<\/form>\s*<\/div>/is',
+            '',
+            $content
+        );
+
+        return $content;
+    }
+
+    /**
+     * Remove all anchor elements whose href points to tsacreativemarketing.co.za (including inner text).
+     */
+    public function removeTsacreativemarketingAnchors(string $content): string
+    {
+        $content = preg_replace(
+            '/<a\s[^>]*href=["\'][^"\']*tsacreativemarketing\.co\.za[^"\']*["\'][^>]*>.*?<\/a>/is',
             '',
             $content
         );
@@ -238,12 +267,20 @@ class ContentReplacementService
     {
         // Remove empty paragraphs
         $content = preg_replace('/<p[^>]*>\s*<\/p>/i', '', $content);
-        
+
         // Remove empty divs
         $content = preg_replace('/<div[^>]*>\s*<\/div>/i', '', $content);
 
         // Clean up whitespace
         $content = preg_replace('/\s{3,}/', ' ', $content);
+
+        // Fix double images/ prefix (loop + regex for paths)
+        $iterations = 0;
+        while (str_contains($content, 'images/images/') && $iterations < 10) {
+            $content = str_replace('images/images/', 'images/', $content);
+            $iterations++;
+        }
+        $content = preg_replace('#(/images/images/)([^"\'>\s<,]+)#i', '/images/$2', $content);
 
         return trim($content);
     }
