@@ -17,7 +17,6 @@ class VerifyContentMigration extends Command
     protected $description = 'Verify content migration completeness and brand name replacement';
 
     protected array $requiredPages = [
-        'the-power-of-strengths',
         'strengths-based-development/teams',
         'strengths-based-development/managers-leaders',
         'strengths-based-development/salespeople',

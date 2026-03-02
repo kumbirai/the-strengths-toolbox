@@ -75,15 +75,16 @@
             @if($page->slug === 'strengths-based-development/managers-leaders')
                 <div class="mb-8">
                     @php
-                        $videoMedia = \App\Models\Media::where(function ($query) {
-                            $query->where('filename', 'like', '%unlock%potential%')
-                                ->orWhere('original_filename', 'like', '%unlock%potential%')
-                                ->orWhere('filename', 'like', '%UnlockYourPotential%');
-                        })->first();
+                        $videoMedia = \App\Models\Media::where('mime_type', 'like', 'video/%')
+                            ->where(function ($query) {
+                                $query->where('filename', 'like', '%unlock%potential%')
+                                    ->orWhere('original_filename', 'like', '%unlock%potential%')
+                                    ->orWhere('filename', 'like', '%UnlockYourPotential%');
+                            })->first();
                         
                         $videoPath = $videoMedia 
                             ? asset('storage/' . $videoMedia->path)
-                            : asset('storage/media/unlock-your-potential.mp4');
+                            : asset('media/unlock-your-potential.mp4');
                     @endphp
                     <div class="relative w-full bg-black rounded-xl shadow-lg overflow-hidden" style="padding-bottom: 56.25%;">
                         <video

@@ -112,6 +112,25 @@ Route::get('/privacy-statement', function (SEOService $seoService) {
 
     return view('pages.privacy-statement', compact('seo'));
 })->name('privacy');
+Route::get('/terms', function (SEOService $seoService) {
+    $seo = $seoService->getDefaultMeta();
+    $seo['title'] = 'Terms of Service - The Strengths Toolbox';
+    $seo['description'] = 'Terms of service, privacy practices, cookie policy, and legal information for The Strengths Toolbox.';
+    $seo['canonical'] = route('terms');
+    $seo['og_url'] = route('terms');
+    $seo['robots'] = 'noindex, follow';
+
+    return view('pages.terms', compact('seo'));
+})->name('terms');
+Route::get('/facilitation', function (SEOService $seoService) {
+    $seo = $seoService->getDefaultMeta();
+    $seo['title'] = 'Facilitation & Workshops - The Strengths Toolbox';
+    $seo['description'] = 'Strengths-based workshops facilitated by Eberhard Niklaus. Team discovery, leadership, and sales workshops tailored to your organisation.';
+    $seo['canonical'] = route('facilitation');
+    $seo['og_url'] = route('facilitation');
+
+    return view('pages.facilitation', compact('seo'));
+})->name('facilitation');
 
 // Search route (before catch-all)
 Route::get('/search', [SearchController::class, 'index'])->name('search');

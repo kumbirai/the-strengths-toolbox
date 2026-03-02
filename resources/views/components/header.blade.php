@@ -48,6 +48,7 @@ use App\Helpers\NavigationHelper;
                 {{-- Facilitation Dropdown --}}
                 <x-navigation-dropdown
                     label="Facilitation"
+                    :route="route('facilitation')"
                     :items="NavigationHelper::getFacilitationItems()"
                 />
 
@@ -197,21 +198,27 @@ use App\Helpers\NavigationHelper;
 
             {{-- Facilitation (Mobile Dropdown) --}}
             <div x-data="{ open: false }" class="space-y-1">
-                <button
-                    @click="open = !open"
-                    class="w-full flex items-center justify-between px-4 py-3 rounded-lg text-neutral-700 hover:bg-primary-50 hover:text-primary-600 transition-colors"
-                >
-                    <span>Facilitation</span>
-                    <svg
-                        class="w-5 h-5 transition-transform"
-                        :class="open ? 'rotate-180' : ''"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                <div class="flex items-center rounded-lg hover:bg-primary-50 transition-colors">
+                    <a href="{{ route('facilitation') }}"
+                       class="flex-1 px-4 py-3 text-neutral-700 hover:text-primary-600 transition-colors {{ request()->routeIs('facilitation') ? 'text-primary-600 font-semibold' : '' }}">
+                        Facilitation
+                    </a>
+                    <button
+                        @click="open = !open"
+                        class="px-3 py-3 text-neutral-700 hover:text-primary-600 transition-colors"
+                        aria-label="Toggle Facilitation submenu"
                     >
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                    </svg>
-                </button>
+                        <svg
+                            class="w-5 h-5 transition-transform"
+                            :class="open ? 'rotate-180' : ''"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                </div>
                 <div x-show="open" x-collapse class="pl-4 space-y-1">
                     @foreach(NavigationHelper::getFacilitationItems() as $item)
                         <a href="{{ $item['url'] }}"

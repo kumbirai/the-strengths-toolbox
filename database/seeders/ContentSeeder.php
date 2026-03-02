@@ -129,17 +129,6 @@ class ContentSeeder extends Seeder
 
         $pages = [
             [
-                'title' => 'The Power of Strengths',
-                'slug' => 'the-power-of-strengths',
-                'excerpt' => 'Discover how identifying and leveraging natural talents transforms individual and team performance.',
-                'content' => $this->getPowerOfStrengthsContent(),
-                'meta_title' => 'The Power of Strengths - The Strengths Toolbox',
-                'meta_description' => 'Learn how strengths-based development can transform your team and drive business growth. Discover the power of leveraging natural talents.',
-                'meta_keywords' => 'strengths-based development, CliftonStrengths, team building, talent development',
-                'is_published' => true,
-                'published_at' => Carbon::now(),
-            ],
-            [
                 'title' => 'Strengths-Based Development for Teams',
                 'slug' => 'strengths-based-development/teams',
                 'excerpt' => 'Build cohesive teams where members understand and complement each other\'s strengths.',
@@ -463,103 +452,6 @@ HTML;
     <p>Eberhard Niklaus brings 30 years of experience in strengths-based development, team building, and business growth. With a passion for helping individuals and teams unlock their potential, Eberhard has worked with over 1560 clients across various industries to achieve exceptional results.</p>
     <p>At The Strengths Toolbox, we believe that everyone has unique natural talents that, when identified and developed, can lead to exceptional performance. Our approach focuses on identifying and understanding individual strengths, building on natural talents rather than fixing weaknesses, and creating strategies for effective application of strengths.</p>
     <p>Our mission is to help individuals and teams discover their strengths and learn how to leverage them for personal and professional success.</p>
-</div>
-HTML;
-    }
-
-    /**
-     * Get content for "The Power of Strengths" page
-     */
-    protected function getPowerOfStrengthsContent(): string
-    {
-        return <<<'HTML'
-<div class="prose prose-lg max-w-none">
-    <h1>The Power of Strengths</h1>
-    <p>Strengths-based development is a transformative approach that focuses on identifying and leveraging natural talents rather than trying to fix weaknesses. When individuals and teams understand their unique strengths, they can achieve exceptional performance and drive sustainable business growth.</p>
-    
-    <p>Research from Gallup shows that individuals who focus on their strengths are <strong>three times more likely to report an excellent quality of life</strong> and <strong>six times more likely to be engaged in their jobs</strong>. Teams that concentrate on strengths daily experience a <strong>12.5% increase in productivity</strong>. These compelling statistics demonstrate the real power of a strengths-based approach.</p>
-    
-    <h3>What Are Strengths?</h3>
-    <p>Strengths are natural patterns of thinking, feeling, and behaving that can be productively applied. They represent your innate talents—the things you do naturally and effortlessly. When you work in your strengths zone, you experience:</p>
-    <ul>
-        <li>Higher levels of engagement and satisfaction</li>
-        <li>Increased productivity and performance</li>
-        <li>Greater confidence and self-awareness</li>
-        <li>Improved relationships and collaboration</li>
-        <li>More energy and vitality</li>
-        <li>Reduced stress and anxiety</li>
-    </ul>
-    
-    <h3>The CliftonStrengths Assessment</h3>
-    <p>Developed by Gallup, the CliftonStrengths assessment helps individuals identify their unique talents. Over <strong>12 million people</strong> have taken this assessment, leading to insights that the key to success lies in understanding and applying one's greatest talents in everyday life.</p>
-    
-    <p>The assessment identifies your top 34 talent themes, with your top 5 being your signature themes—the talents you use most naturally and frequently. Understanding these themes helps you:</p>
-    <ul>
-        <li>Recognize your natural patterns of thinking, feeling, and behaving</li>
-        <li>Understand how you can contribute most effectively</li>
-        <li>Develop strategies to apply your talents productively</li>
-        <li>Build on your natural abilities to achieve excellence</li>
-    </ul>
-    
-    <h3>The Strengths-Based Approach</h3>
-    <p>Unlike traditional development approaches that focus on weaknesses, strengths-based development helps you:</p>
-    <ul>
-        <li>Identify your unique combination of strengths through proven assessment tools</li>
-        <li>Understand how to apply strengths effectively in your work and life</li>
-        <li>Build on natural talents to achieve excellence rather than mediocrity</li>
-        <li>Create strategies to manage areas of lesser talent through partnerships and systems</li>
-        <li>Develop confidence in your natural abilities</li>
-        <li>Align your work and life with your strengths for greater fulfillment</li>
-    </ul>
-    
-    <h3>Benefits for Individuals</h3>
-    <p>When you understand and use your strengths:</p>
-    <ul>
-        <li>You perform better in your role and achieve your goals more effectively</li>
-        <li>You experience greater job satisfaction and fulfillment</li>
-        <li>You have more energy and engagement in your work</li>
-        <li>You build stronger professional relationships</li>
-        <li>You experience less stress and greater well-being</li>
-        <li>You develop faster in areas where you're already strong</li>
-    </ul>
-    
-    <h3>Benefits for Teams</h3>
-    <p>Teams that leverage strengths:</p>
-    <ul>
-        <li>Collaborate more effectively by understanding each other's strengths</li>
-        <li>Communicate better by recognizing different communication styles</li>
-        <li>Reduce conflict and misunderstandings through strengths awareness</li>
-        <li>Achieve higher performance levels with 12.5% productivity increases</li>
-        <li>Build on each other's strengths rather than competing</li>
-        <li>Create more innovative solutions through diverse strengths perspectives</li>
-    </ul>
-    
-    <h3>Benefits for Organizations</h3>
-    <p>Organizations that embrace strengths-based development:</p>
-    <ul>
-        <li>See increased employee engagement (employees are 6x more engaged)</li>
-        <li>Experience reduced turnover and better retention</li>
-        <li>Achieve better business results and profitability</li>
-        <li>Build a culture of excellence and continuous improvement</li>
-        <li>Attract and retain top talent</li>
-        <li>Create competitive advantages through strengths-based strategies</li>
-    </ul>
-    
-    <h3>The Research Behind Strengths</h3>
-    <p>Gallup's decades of research have shown:</p>
-    <ul>
-        <li>People who use their strengths every day are 6 times more likely to be engaged at work</li>
-        <li>Teams that focus on strengths daily see 12.5% productivity increases</li>
-        <li>Organizations with strengths-based cultures see 19% higher sales and 29% increased profits</li>
-        <li>High-turnover organizations implementing strengths see 72% lower turnover</li>
-        <li>Individuals focusing on strengths are 3 times more likely to report excellent quality of life</li>
-    </ul>
-    
-    <div class="mt-8 p-6 bg-primary-50 rounded-lg">
-        <h3>Ready to Discover Your Strengths?</h3>
-        <p>Contact us today to learn how strengths-based development can transform your team and drive business growth. Complete the CliftonStrengths assessment and unlock your potential.</p>
-        <p class="mt-4"><strong>Phone:</strong> +27 83 294 8033 | <strong>Email:</strong> welcome@eberhardniklaus.co.za</p>
-    </div>
 </div>
 HTML;
     }

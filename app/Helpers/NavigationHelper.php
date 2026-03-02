@@ -8,10 +8,7 @@ class NavigationHelper
 {
     public static function getStrengthsBasedDevelopmentItems(): array
     {
-        $pages = Page::where(function ($query) {
-            $query->where('slug', 'like', 'strengths-based-development/%')
-                ->orWhere('slug', 'the-power-of-strengths');
-        })
+        $pages = Page::where('slug', 'like', 'strengths-based-development/%')
             ->where('is_published', true)
             ->orderBy('title')
             ->get();
