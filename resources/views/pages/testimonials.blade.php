@@ -24,9 +24,24 @@
         </div>
     </section>
 
-    {{-- Testimonials Grid --}}
+    {{-- Testimonial Video (first item) --}}
     <section class="section-padding section-light">
         <div class="container-custom">
+            <div class="max-w-4xl mx-auto mb-12">
+                <div class="relative w-full bg-neutral-900 rounded-xl shadow-lg overflow-hidden" style="padding-bottom: 56.25%;">
+                    <video
+                        class="absolute top-0 left-0 w-full h-full object-contain"
+                        controls
+                        preload="metadata"
+                        playsinline
+                        aria-label="Client testimonial video"
+                    >
+                        <source src="{{ asset('media/the-strengths-toolbox-testimonial.mp4') }}" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+            </div>
+
             @php
                 $testimonials = \App\Models\Testimonial::published()
                     ->orderBy('display_order', 'asc')

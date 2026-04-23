@@ -14,9 +14,11 @@
     <form 
         action="{{ $parentId ? route('blog.comments.reply', ['slug' => $post->slug, 'comment' => $parentId]) : route('blog.comments.store', $post->slug) }}" 
         method="POST"
-        class="space-y-4"
+        class="space-y-4 js-blog-comment-form"
     >
         @csrf
+
+        <input type="hidden" name="grecaptcha_response" class="js-blog-recaptcha-token" value="">
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -102,5 +104,34 @@
                 {{ $parentId ? 'Post Reply' : 'Post Comment' }}
             </button>
         </div>
+
+        <div style="position:absolute;left:-99999px;width:1px;height:1px;overflow:hidden;opacity:0;visibility:hidden;pointer-events:none;clip:rect(0,0,0,0);" aria-hidden="true">
+            <label for="blog_fax_number">Fax</label>
+            <input type="text" id="blog_fax_number" name="fax_number" tabindex="-1" autocomplete="off">
+        </div>
     </form>
+    <script>
+        document.querySelectorAll('.js-blog-comment-form').forEach(function(form) {
+            if (form.dataset.recaptchaBound) return;
+            form.dataset.recaptchaBound = '1';
+            form.addEventListener('submit', function(e) {
+                if (form.dataset.recaptchaSubmitting === '1') return;
+                var siteKey = document.querySelector('meta[name=recaptcha-site-key]');
+                if (!siteKey || !siteKey.content || typeof grecaptcha === 'undefined') {
+                    return;
+                }
+                e.preventDefault();
+                form.dataset.recaptchaSubmitting = '1';
+                grecaptcha.execute(siteKey.content, { action: 'blog_comment' }).then(function(token) {
+                    var input = form.querySelector('.js-blog-recaptcha-token');
+                    if (input) input.value = token;
+                    form.removeAttribute('data-recaptcha-submitting');
+                    form.submit();
+                }).catch(function() {
+                    form.removeAttribute('data-recaptcha-submitting');
+                    form.submit();
+                });
+            });
+        });
+    </script>
 </div>

@@ -21,8 +21,9 @@ class FormRenderService
             return '<p class="text-neutral-500">This form has no fields.</p>';
         }
 
-        $html = '<form method="POST" action="'.route('forms.submit', $form->slug).'" enctype="multipart/form-data" class="space-y-4">';
+        $html = '<form method="POST" action="'.route('forms.submit', $form->slug).'" enctype="multipart/form-data" class="space-y-4 js-dynamic-form" data-form-slug="'.htmlspecialchars($form->slug).'">';
         $html .= csrf_field();
+        $html .= '<input type="hidden" name="grecaptcha_response" class="js-dynamic-recaptcha-token" value="">';
 
         foreach ($fields as $field) {
             $html .= $this->renderField($field);
@@ -34,7 +35,14 @@ class FormRenderService
         $html .= '</button>';
         $html .= '</div>';
 
+        $html .= '<div style="position:absolute;left:-99999px;width:1px;height:1px;overflow:hidden;opacity:0;visibility:hidden;pointer-events:none;clip:rect(0,0,0,0);" aria-hidden="true"><label for="dynamic_form_fax_number">Fax</label><input type="text" id="dynamic_form_fax_number" name="fax_number" tabindex="-1" autocomplete="off"></div>';
         $html .= '</form>';
+
+        if (config('recaptcha.enabled') && config('recaptcha.site_key')) {
+            $html .= '<script>';
+            $html .= 'document.querySelectorAll(".js-dynamic-form").forEach(function(form){if(form.dataset.recaptchaBound)return;form.dataset.recaptchaBound="1";form.addEventListener("submit",function(e){if(form.dataset.recaptchaSubmitting==="1")return;var siteKey=document.querySelector("meta[name=recaptcha-site-key]");if(!siteKey||!siteKey.content||typeof grecaptcha==="undefined"){return;}e.preventDefault();form.dataset.recaptchaSubmitting="1";grecaptcha.execute(siteKey.content,{action:"dynamic_form"}).then(function(token){var input=form.querySelector(".js-dynamic-recaptcha-token");if(input)input.value=token;form.removeAttribute("data-recaptcha-submitting");form.submit();}).catch(function(){form.removeAttribute("data-recaptcha-submitting");form.submit();});});});';
+            $html .= '</script>';
+        }
 
         return $html;
     }

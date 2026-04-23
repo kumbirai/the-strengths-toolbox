@@ -80,23 +80,31 @@
                         method="POST"
                         x-show="!success"
                         x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-                        @submit.prevent="
+                        @submit.prevent="(async () => {
                             submitting = true;
-                            fetch('{{ route('ebook.signup') }}', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
-                                    'Accept': 'application/json'
-                                },
-                                body: JSON.stringify({
-                                    first_name: $refs.first_name.value,
-                                    last_name: $refs.last_name.value,
-                                    email: $refs.email.value
-                                })
-                            })
-                            .then(response => response.json())
-                            .then(data => {
+                            const siteKey = document.querySelector('meta[name=recaptcha-site-key]')?.content;
+                            let token = '';
+                            if (siteKey && typeof grecaptcha !== 'undefined') {
+                                try { token = await grecaptcha.execute(siteKey, { action: 'ebook_signup' }); } catch (e) {}
+                            }
+                            const body = {
+                                first_name: $refs.first_name.value,
+                                last_name: $refs.last_name.value,
+                                email: $refs.email.value,
+                                fax_number: $refs.fax_number?.value || '',
+                                grecaptcha_response: token
+                            };
+                            try {
+                                const response = await fetch('{{ route('ebook.signup') }}', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                                        'Accept': 'application/json'
+                                    },
+                                    body: JSON.stringify(body)
+                                });
+                                const data = await response.json();
                                 submitting = false;
                                 if (data.errors) {
                                     errors = data.errors;
@@ -107,12 +115,11 @@
                                     $refs.last_name.value = '';
                                     $refs.email.value = '';
                                 }
-                            })
-                            .catch(() => {
+                            } catch (err) {
                                 submitting = false;
                                 errors = { error: ['Something went wrong. Please try again.'] };
-                            })
-                        "
+                            }
+                        })()"
                     >
                         @csrf
 
@@ -191,6 +198,11 @@
                         <p class="text-xs text-gray-500 mt-4 text-center">
                             We respect your privacy. Unsubscribe at any time.
                         </p>
+
+                        <div style="position:absolute;left:-99999px;width:1px;height:1px;overflow:hidden;opacity:0;visibility:hidden;pointer-events:none;clip:rect(0,0,0,0);" aria-hidden="true">
+                            <label for="ebook_fax_number">Fax</label>
+                            <input type="text" id="ebook_fax_number" name="fax_number" tabindex="-1" autocomplete="off" x-ref="fax_number">
+                        </div>
                     </form>
                 </div>
             </div>

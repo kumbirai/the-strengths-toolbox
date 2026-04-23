@@ -5,17 +5,34 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\BlogComment;
 use App\Models\BlogPost;
+use App\Services\RecaptchaVerifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
 class BlogCommentController extends Controller
 {
+    protected RecaptchaVerifier $recaptchaVerifier;
+
+    public function __construct(RecaptchaVerifier $recaptchaVerifier)
+    {
+        $this->recaptchaVerifier = $recaptchaVerifier;
+    }
     /**
      * Store a new comment
      */
     public function store(Request $request, string $slug)
     {
+        if ($request->filled('fax_number')) {
+            return redirect()->route('blog.show', $slug)
+                ->with('comment_error', 'Something went wrong. Please try again.');
+        }
+
+        if (! $this->recaptchaVerifier->verify($request->input('grecaptcha_response', ''), 'blog_comment')) {
+            return redirect()->route('blog.show', $slug)
+                ->with('comment_error', 'Verification failed. Please try again.');
+        }
+
         $post = BlogPost::where('slug', $slug)->where('is_published', true)->first();
 
         if (! $post) {
@@ -23,7 +40,7 @@ class BlogCommentController extends Controller
                 ->with('error', 'Blog post not found.');
         }
 
-        $validator = Validator::make($request->all(), [
+        $validator = Validator::make($request->only(['author_name', 'author_email', 'author_website', 'content']), [
             'author_name' => 'required|string|max:255',
             'author_email' => 'required|email|max:255',
             'author_website' => 'nullable|url|max:255',
@@ -68,6 +85,18 @@ class BlogCommentController extends Controller
      */
     public function storeReply(Request $request, string $slug, BlogComment $comment)
     {
+        if ($request->filled('fax_number')) {
+            return redirect()->route('blog.show', $slug)
+                ->with('comment_error', 'Something went wrong. Please try again.')
+                ->withFragment('comment-'.$comment->id);
+        }
+
+        if (! $this->recaptchaVerifier->verify($request->input('grecaptcha_response', ''), 'blog_comment')) {
+            return redirect()->route('blog.show', $slug)
+                ->with('comment_error', 'Verification failed. Please try again.')
+                ->withFragment('comment-'.$comment->id);
+        }
+
         $post = BlogPost::where('slug', $slug)->where('is_published', true)->first();
 
         if (! $post) {
@@ -81,7 +110,7 @@ class BlogCommentController extends Controller
                 ->with('error', 'Invalid comment.');
         }
 
-        $validator = Validator::make($request->all(), [
+        $validator = Validator::make($request->only(['author_name', 'author_email', 'author_website', 'content']), [
             'author_name' => 'required|string|max:255',
             'author_email' => 'required|email|max:255',
             'author_website' => 'nullable|url|max:255',

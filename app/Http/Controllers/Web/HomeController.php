@@ -7,6 +7,7 @@ use App\Models\Testimonial;
 use App\Services\BlogPostService;
 use App\Services\EmailService;
 use App\Services\FormService;
+use App\Services\RecaptchaVerifier;
 use App\Services\SEOService;
 use App\Services\SubscriberService;
 use Illuminate\Http\Request;
@@ -24,18 +25,22 @@ class HomeController extends Controller
 
     protected EmailService $emailService;
 
+    protected RecaptchaVerifier $recaptchaVerifier;
+
     public function __construct(
         BlogPostService $blogPostService,
         SEOService $seoService,
         FormService $formService,
         SubscriberService $subscriberService,
-        EmailService $emailService
+        EmailService $emailService,
+        RecaptchaVerifier $recaptchaVerifier
     ) {
         $this->blogPostService = $blogPostService;
         $this->seoService = $seoService;
         $this->formService = $formService;
         $this->subscriberService = $subscriberService;
         $this->emailService = $emailService;
+        $this->recaptchaVerifier = $recaptchaVerifier;
     }
 
     /**
@@ -99,6 +104,26 @@ class HomeController extends Controller
      */
     public function submitEbookForm(Request $request)
     {
+        if ($request->filled('fax_number')) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'errors' => ['error' => ['Something went wrong. Please try again.']],
+                ], 422);
+            }
+            return redirect()->back()
+                ->withErrors(['error' => 'Something went wrong. Please try again.']);
+        }
+
+        if (! $this->recaptchaVerifier->verify($request->input('grecaptcha_response', ''), 'ebook_signup')) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'errors' => ['error' => ['Verification failed. Please try again.']],
+                ], 422);
+            }
+            return redirect()->back()
+                ->withErrors(['error' => 'Verification failed. Please try again.']);
+        }
+
         $validated = $request->validate([
             'first_name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s\-\'\.]+$/'],
             'last_name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s\-\'\.]+$/'],

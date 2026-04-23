@@ -1,4 +1,4 @@
-<div x-data="chatbotWidget()" class="fixed bottom-4 right-4 z-50">
+<div x-data="chatbotWidget()" class="fixed right-4 z-50" style="bottom: 6rem;">
 {{-- Chat Window --}}
 <div 
     x-show="isOpen"

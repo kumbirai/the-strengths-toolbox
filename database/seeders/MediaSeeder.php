@@ -54,10 +54,21 @@ class MediaSeeder extends Seeder
     {
         $this->command->info('Ensuring storage link...');
 
+        $target = storage_path('app/public');
+        if (! File::isDirectory($target)) {
+            File::makeDirectory($target, 0755, true);
+            $this->command->line('  ✓ Created ' . $target);
+        }
+
         $link = public_path('storage');
         if (! File::exists($link)) {
-            Artisan::call('storage:link');
-            $this->command->line('  ✓ Storage link created');
+            try {
+                Artisan::call('storage:link');
+                $this->command->line('  ✓ Storage link created');
+            } catch (\Throwable $e) {
+                $this->command->warn('  ⊘ Could not create storage symlink: ' . $e->getMessage());
+                $this->command->warn('    Create it manually: in public/ add a symlink "storage" → ../storage/app/public (or use cPanel File Manager).');
+            }
         } else {
             $this->command->line('  ✓ Storage link already exists');
         }

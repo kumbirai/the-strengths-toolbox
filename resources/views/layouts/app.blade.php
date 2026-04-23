@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="session-id" content="{{ session()->getId() }}">
+    @if(config('recaptcha.enabled') && config('recaptcha.site_key'))
+        <meta name="recaptcha-site-key" content="{{ config('recaptcha.site_key') }}">
+    @endif
 
     {{-- SEO Meta Tags --}}
     @include('partials.meta')
@@ -41,6 +44,11 @@
 
     {{-- Page-specific Schema --}}
     @stack('schema')
+
+    {{-- reCAPTCHA v3 --}}
+    @if(config('recaptcha.enabled') && config('recaptcha.site_key'))
+        <script src="https://www.google.com/recaptcha/api.js?render={{ config('recaptcha.site_key') }}" async defer></script>
+    @endif
 
     {{-- Calendly Script --}}
     @if(config('services.calendly.enabled', false))

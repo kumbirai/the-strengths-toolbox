@@ -111,7 +111,7 @@
                     If you'd rather reach out via email or phone, we're here to help.
                 </p>
                 <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a href="mailto:{{ config('mail.from.address') }}" class="btn btn-secondary">
+                    <a href="mailto:welcome@eberhardniklaus.co.za" class="btn btn-secondary">
                         Send Email
                     </a>
                     <a href="{{ route('contact') }}" class="btn btn-primary">

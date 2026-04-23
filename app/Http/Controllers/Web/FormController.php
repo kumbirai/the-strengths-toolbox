@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Services\FormService;
+use App\Services\RecaptchaVerifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -11,9 +12,12 @@ class FormController extends Controller
 {
     protected FormService $formService;
 
-    public function __construct(FormService $formService)
+    protected RecaptchaVerifier $recaptchaVerifier;
+
+    public function __construct(FormService $formService, RecaptchaVerifier $recaptchaVerifier)
     {
         $this->formService = $formService;
+        $this->recaptchaVerifier = $recaptchaVerifier;
     }
 
     /**
@@ -45,8 +49,32 @@ class FormController extends Controller
             abort(403);
         }
 
+        if ($request->filled('fax_number')) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Verification failed. Please try again.',
+                ], 422);
+            }
+            return redirect()->back()
+                ->withErrors(['error' => 'Verification failed. Please try again.']);
+        }
+
+        if (! $this->recaptchaVerifier->verify($request->input('grecaptcha_response', ''), 'dynamic_form')) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Verification failed. Please try again.',
+                ], 422);
+            }
+            return redirect()->back()
+                ->withErrors(['error' => 'Verification failed. Please try again.']);
+        }
+
+        $submissionData = $request->except(['fax_number', 'grecaptcha_response', '_token']);
+
         try {
-            $submission = $this->formService->submit($form->id, $request->all());
+            $submission = $this->formService->submit($form->id, $submissionData);
 
             if ($request->expectsJson()) {
                 return response()->json([

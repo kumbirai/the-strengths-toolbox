@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Services\EmailService;
 use App\Services\FormService;
+use App\Services\RecaptchaVerifier;
 use App\Services\SEOService;
 use Illuminate\Http\Request;
 
@@ -16,14 +17,18 @@ class ContactController extends Controller
 
     protected SEOService $seoService;
 
+    protected RecaptchaVerifier $recaptchaVerifier;
+
     public function __construct(
         FormService $formService,
         EmailService $emailService,
-        SEOService $seoService
+        SEOService $seoService,
+        RecaptchaVerifier $recaptchaVerifier
     ) {
         $this->formService = $formService;
         $this->emailService = $emailService;
         $this->seoService = $seoService;
+        $this->recaptchaVerifier = $recaptchaVerifier;
     }
 
     /**
@@ -53,6 +58,27 @@ class ContactController extends Controller
      */
     public function submit(Request $request)
     {
+        if ($request->filled('fax_number')) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'errors' => ['error' => ['Something went wrong. Please try again.']],
+                ], 422);
+            }
+            return redirect()->route('contact')
+                ->withErrors(['error' => 'Something went wrong. Please try again.']);
+        }
+
+        $token = $request->input('grecaptcha_response', '');
+        if (! $this->recaptchaVerifier->verify($token, 'contact')) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'errors' => ['error' => ['Verification failed. Please try again.']],
+                ], 422);
+            }
+            return redirect()->route('contact')
+                ->withErrors(['error' => 'Verification failed. Please try again.']);
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s\-\'\.]+$/'],
             'email' => ['required', 'email', 'max:255'], // Removed :rfc,dns for test compatibility

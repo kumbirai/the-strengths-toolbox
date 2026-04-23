@@ -6,27 +6,34 @@
         success: false,
         errors: {}
     }"
-    @submit.prevent="
+    @submit.prevent="(async () => {
         submitting = true;
         errors = {};
-        
-        fetch('{{ route('contact.submit') }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-                name: $refs.name.value,
-                email: $refs.email.value,
-                phone: $refs.phone.value,
-                subject: $refs.subject.value,
-                message: $refs.message.value
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
+        const siteKey = document.querySelector('meta[name=recaptcha-site-key]')?.content;
+        let token = '';
+        if (siteKey && typeof grecaptcha !== 'undefined') {
+            try { token = await grecaptcha.execute(siteKey, { action: 'contact' }); } catch (e) {}
+        }
+        const body = {
+            name: $refs.name.value,
+            email: $refs.email.value,
+            phone: $refs.phone.value,
+            subject: $refs.subject.value,
+            message: $refs.message.value,
+            fax_number: $refs.fax_number?.value || '',
+            grecaptcha_response: token
+        };
+        try {
+            const response = await fetch('{{ route('contact.submit') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(body)
+            });
+            const data = await response.json();
             submitting = false;
             if (data.errors) {
                 errors = data.errors;
@@ -37,35 +44,18 @@
                 $refs.phone.value = '';
                 $refs.subject.value = '';
                 $refs.message.value = '';
-                
-                // Scroll success message into view
                 $nextTick(() => {
                     if ($refs.successMessage) {
-                        try {
-                            // Try smooth scrolling with options (modern browsers)
-                            $refs.successMessage.scrollIntoView({ 
-                                behavior: 'smooth', 
-                                block: 'center',
-                                inline: 'nearest'
-                            });
-                        } catch (e) {
-                            // Fallback for older browsers
-                            $refs.successMessage.scrollIntoView();
-                        }
+                        try { $refs.successMessage.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' }); } catch (e) { $refs.successMessage.scrollIntoView(); }
                     }
                 });
-                
-                // Dispatch event to parent to show eBook section after delay
-                setTimeout(() => {
-                    $dispatch('contact-form-success');
-                }, 2500);
+                setTimeout(() => { $dispatch('contact-form-success'); }, 2500);
             }
-        })
-        .catch(() => {
+        } catch (err) {
             submitting = false;
             errors = { error: ['Something went wrong. Please try again.'] };
-        })
-    "
+        }
+    })()"
     class="bg-white rounded-xl p-8 shadow-lg"
 >
     @csrf
@@ -204,4 +194,10 @@
     <p class="text-xs text-gray-500 mt-4 text-center">
         By submitting this form, you agree to our privacy policy.
     </p>
+
+    {{-- Honeypot: at end of form, fully hidden so it never shows or affects layout --}}
+    <div style="position:absolute;left:-99999px;width:1px;height:1px;overflow:hidden;opacity:0;visibility:hidden;pointer-events:none;clip:rect(0,0,0,0);" aria-hidden="true">
+        <label for="contact_fax_number">Fax</label>
+        <input type="text" id="contact_fax_number" name="fax_number" tabindex="-1" autocomplete="off" x-ref="fax_number">
+    </div>
 </form>

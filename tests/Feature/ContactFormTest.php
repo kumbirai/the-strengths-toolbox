@@ -81,6 +81,23 @@ class ContactFormTest extends TestCase
     }
 
     /**
+     * Test contact form rejects submission when honeypot is filled (bot)
+     */
+    public function test_contact_form_rejects_honeypot(): void
+    {
+        $response = $this->postJson('/contact', [
+            'name' => 'John Doe',
+            'email' => 'john@example.com',
+            'subject' => 'Test',
+            'message' => 'This is a test message with more than 10 characters.',
+            'fax_number' => '1234567890',
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonPath('errors.error.0', 'Something went wrong. Please try again.');
+    }
+
+    /**
      * Test contact form validation - message too short
      */
     public function test_contact_form_validates_message_length(): void

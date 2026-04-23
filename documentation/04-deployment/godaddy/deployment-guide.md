@@ -10,8 +10,10 @@ This guide provides step-by-step instructions for deploying The Strengths Toolbo
 
 - GoDaddy cPanel Linux hosting account (shared hosting or higher)
 - SSH access enabled (required for Composer and Laravel commands)
-- Domain name configured and pointing to GoDaddy
+- Domain name configured and pointing to GoDaddy (or use a **temporary URL** to test first — see below)
 - Access to cPanel dashboard
+
+**Testing without a domain:** If you have hosting but the domain is not connected yet, you can test using GoDaddy’s temporary URL (e.g. `https://YOUR-SERVER.prod.iad2.secureserver.net/~cpanel_username`). See **section 4a** in `DEPLOYMENT-CPANEL.md` for finding the temp URL, deploying so it serves the app, setting `APP_URL`, and switching to your real domain later.
 
 ### Server Requirements Verification
 
@@ -254,12 +256,32 @@ QUEUE_CONNECTION=database
 SESSION_DRIVER=database
 SESSION_LIFETIME=120
 
+# Mail – use Option B (authenticated SMTP). Port 25 relay often times out or is blocked.
+# Option A: Relay (often fails with "Connection timed out" on GoDaddy; FROM must be @yourdomain)
+# MAIL_MAILER=smtp
+# MAIL_SCHEME=null
+# MAIL_HOST=relay-hosting.secureserver.net
+# MAIL_PORT=25
+# MAIL_USERNAME=null
+# MAIL_PASSWORD=null
+# MAIL_FROM_ADDRESS=noreply@yourdomain.com
+# MAIL_FROM_NAME="${APP_NAME}"
+# Option B: GoDaddy authenticated SMTP (use MAIL_SCHEME=tls for 587; ssl + 465 if 587 times out)
+# MAIL_MAILER=smtp
+# MAIL_HOST=smtpout.secureserver.net
+# MAIL_PORT=587
+# MAIL_SCHEME=tls
+# MAIL_USERNAME=your_email@yourdomain.com
+# MAIL_PASSWORD=your_email_password
+# MAIL_FROM_ADDRESS=noreply@yourdomain.com
+# MAIL_FROM_NAME="${APP_NAME}"
+# Option C: SMTP2GO or other third-party SMTP (if GoDaddy and 2525/587 time out, try port 80 or 443)
 MAIL_MAILER=smtp
-MAIL_HOST=relay-hosting.secureserver.net
-MAIL_PORT=25
-MAIL_USERNAME=your_email@yourdomain.com
-MAIL_PASSWORD=your_email_password
-MAIL_ENCRYPTION=null
+MAIL_HOST=mail-eu.smtp2go.com
+MAIL_PORT=80
+MAIL_SCHEME=null
+MAIL_USERNAME=your_smtp2go_username
+MAIL_PASSWORD=your_smtp2go_password
 MAIL_FROM_ADDRESS=noreply@yourdomain.com
 MAIL_FROM_NAME="${APP_NAME}"
 
@@ -273,7 +295,7 @@ GOOGLE_ANALYTICS_ID=your_ga_id
 **Important Notes:**
 - `DB_HOST` is usually `localhost` on GoDaddy
 - `DB_DATABASE` and `DB_USERNAME` must include the full names (with username prefix)
-- GoDaddy mail server: `relay-hosting.secureserver.net` (port 25, no encryption for shared hosting)
+- **Mail:** Prefer **Option B** (authenticated SMTP). The port 25 relay (`relay-hosting.secureserver.net`) often fails with "Connection timed out" because port 25 is blocked on many networks. Use **smtpout.secureserver.net** on **port 587** with **MAIL_SCHEME=tls** and your GoDaddy Workspace/Email address and password. In GoDaddy Email & Office, ensure **SMTP Authentication** is enabled for the account. Daily sending limits are typically 250–500.
 - Set `APP_DEBUG=false` for production
 
 ### Step 8: Install Composer Dependencies
@@ -614,6 +636,46 @@ Consider upgrading to VPS or dedicated server if:
    - Regular database maintenance
    - Optimize slow queries
    - Use database indexes
+
+## Troubleshooting: Email (Connection timed out)
+
+If you see **"Failed to send form submission email"** or **"Connection could not be established with host ... (Connection timed out)"**:
+
+1. **Use TLS for port 587.** Set **`MAIL_SCHEME=tls`** (not `smtp`). Port 587 uses STARTTLS; without the correct scheme the connection can fail or timeout.
+   ```env
+   MAIL_MAILER=smtp
+   MAIL_HOST=smtpout.secureserver.net
+   MAIL_PORT=587
+   MAIL_SCHEME=tls
+   MAIL_USERNAME=your_full_email@thestrengthstoolbox.com
+   MAIL_PASSWORD=your_email_password
+   MAIL_FROM_ADDRESS=noreply@thestrengthstoolbox.com
+   MAIL_FROM_NAME="${APP_NAME}"
+   ```
+
+2. **If 587 still times out**, try **port 465 with SSL** (some networks block 587 but allow 465):
+   ```env
+   MAIL_PORT=465
+   MAIL_SCHEME=ssl
+   ```
+
+3. **Use a GoDaddy Workspace / Email account.** The username must be the full email; the password is the one you use for webmail. In **GoDaddy Email & Office** (or Workspace), ensure **SMTP Authentication** is enabled for that account.
+
+4. After changing `.env`, run `php artisan config:clear` (or restart PHP) so the new values are loaded.
+
+5. **If both 587 and 465 time out**, the hosting environment may be blocking outbound SMTP. Options: (a) Contact GoDaddy to confirm SMTP is allowed from your plan; (b) Use a transactional email API (e.g. Mailgun, SendGrid, Amazon SES) that uses HTTP or other ports; (c) Use Laravel's `log` mailer temporarily to capture messages to `storage/logs/laravel.log` for testing.
+
+**SMTP2GO (or other third-party) times out on 2525/587:** Many shared hosts block outbound SMTP ports (25, 2525, 587, 465). SMTP2GO allows **port 80** (TLS/no encryption) and **port 443** (SSL), which are often allowed. In `.env` try:
+```env
+MAIL_PORT=80
+MAIL_SCHEME=null
+```
+If that still times out, try:
+```env
+MAIL_PORT=443
+MAIL_SCHEME=ssl
+```
+Use your region’s SMTP host (e.g. `mail-eu.smtp2go.com`, `mail.smtp2go.com`). After changes, run `php artisan config:clear`.
 
 ## Additional Resources
 
